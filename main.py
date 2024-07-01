@@ -52,7 +52,7 @@ class LearnProcess:
         ]
         self.exp_type = exp_type
 
-    def load_data(self):
+    def _load_data(self):
         """
         Loads the data for the time series classification model.
         
@@ -131,7 +131,7 @@ class LearnProcess:
         self.voltage_C_end = rename_columns(voltage_C_end)
         return self
     
-    def preprocessing(self):
+    def _preprocessing(self):
         """
         Preprocesses the data for the time series classification model.
         
@@ -141,7 +141,7 @@ class LearnProcess:
             LearnProcess: The updated LearnProcess instance with the preprocessed data.
         """
                 
-        self = LearnProcess.load_data(self)
+        self = LearnProcess._load_data(self)
 
         # Инициализация временных переменных для выгрузки экспериментов
         data_current_A_beg = []
@@ -225,7 +225,7 @@ class LearnProcess:
                                                np.array(data_voltage_C_end_ang)), axis = 1)
         return self
     
-    def aimData(self):
+    def _aimData(self):
         """
         Loads and returns the best method from a file located in the 'method train result' directory.
         
@@ -239,9 +239,15 @@ class LearnProcess:
         best_method = np.array(best_method).transpose().flatten()
         return best_method
 
-    def trainData_one_exp(self):
-
-        self = LearnProcess.preprocessing(self)
+    def _trainData_one_exp(self):
+        """
+        Trains the data for a single experiment.
+        
+        Returns:
+            numpy.ndarray: The training data for the specified experiment type.
+        """
+                
+        self = LearnProcess._preprocessing(self)
    
         variable_name = self.exp_type
         if variable_name == 'current begin':
@@ -263,7 +269,16 @@ class LearnProcess:
 
         return self.X
 
-    def trainData_multi_exp(self, exp = None):
+    def _trainData_multi_exp(self, exp = None):
+        """
+        Trains the data for multiple experiments.
+
+        Args:
+            exp (str, optional): The experiment type to train the data for. Can be one of 'current begin', 'current end', 'voltage begin', 'voltage end', 'current begin angle', 'current end angle', 'voltage begin angle', or 'voltage end angle'.
+
+        Returns:
+            numpy.ndarray: The training data for the specified experiment type.
+        """
 
         variable_name = exp
         if variable_name == 'current begin':
@@ -284,7 +299,7 @@ class LearnProcess:
             self.X = self.data_voltage_end_ang
         return self.X
 
-    def configuration(self):
+    def _configuration(self):
         """
         Configures the parameters for a time series classification model.
         
@@ -328,10 +343,17 @@ class LearnProcess:
         }
         return self.config
     
-    def timenow(self):
+    def _timenow(self):
+        """
+        Returns the current date and time as a string in the format "dd_mm_YYYY_HH_MM".
+        
+        Returns:
+            str: The current date and time as a string.
+        """
+                
         return datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
 
-    def save_model(self, model, exp_name, acc, report, timenow):
+    def _save_model(self, model, exp_name, acc, report, timenow):
         """
         Saves a trained time series classification model to a file, along with relevant metadata about the model and training process.
         
@@ -369,26 +391,46 @@ class LearnProcess:
         return 
 
     def fit(self, exp = None, timenow = None):
+        """
+        Trains a time series classification model and saves the trained model along with relevant metadata.
+        
+        Args:
+            exp (str, optional): The name of the experiment or model being trained. If not provided, the `exp_type` attribute of the `LearnProcess` instance will be used.
+            timenow (str, optional): The current date and time as a string in the format "dd_mm_YYYY_HH_MM". If not provided, it will be generated using the `_timenow()` method.
+        
+        Returns:
+            tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
+        """
+                
         if exp is not None and timenow is not None and self.exp_type is None:
             print('Training the model: ', exp)
-            config = LearnProcess.configuration(self)
-            X = LearnProcess.trainData_multi_exp(self, exp)
-            Y = LearnProcess.aimData(self)
+            config = LearnProcess._configuration(self)
+            X = LearnProcess._trainData_multi_exp(self, exp)
+            Y = LearnProcess._aimData(self)
             model, acc, report = tscf(config, X, Y).main()
-            LearnProcess.save_model(self, model, exp, acc, report, timenow)
+            LearnProcess._save_model(self, model, exp, acc, report, timenow)
         else:
             print('Training the model: ', self.exp_type)
-            config = LearnProcess.configuration(self)
-            X = LearnProcess.trainData_one_exp(self)
-            Y = LearnProcess.aimData(self)
+            config = LearnProcess._configuration(self)
+            X = LearnProcess._trainData_one_exp(self)
+            Y = LearnProcess._aimData(self)
             model, acc, report = tscf(config, X, Y).main()
-            timenow = LearnProcess.timenow(self)
-            LearnProcess.save_model(self, model, self.exp_type, acc, report, timenow)
+            timenow = LearnProcess._timenow(self)
+            LearnProcess._save_model(self, model, self.exp_type, acc, report, timenow)
         return model, acc, report
     
     def FullExpProcess(self):
-        self = LearnProcess.preprocessing(self)
-        timenow = LearnProcess.timenow(self)
+        """
+        Runs the full experiment process for the LearnProcess instance.
+        
+        This method preprocesses the data, gets the current timestamp, and then iterates through the `exp_library` list, calling the `fit()` method for each experiment.
+        
+        Returns:
+            str: A message indicating the outcome of the full experiment process.
+        """
+                
+        self = LearnProcess._preprocessing(self)
+        timenow = LearnProcess._timenow(self)
         for exp in self.exp_library:
             LearnProcess.fit(self, exp, timenow)
         return 'Могло быть лучше но так получилось'
