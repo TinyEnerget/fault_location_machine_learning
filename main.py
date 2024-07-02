@@ -1,5 +1,6 @@
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
+from alg_repository.hydra_model import HydraCNNClassifier as hydrc
 import json
 import joblib
 import numpy as np
@@ -8,10 +9,26 @@ import datetime
 import os
 
 class LearnProcess:
+    """
+        The `LearnProcess` class is responsible for loading, preprocessing, and training time series classification models. It provides methods to:
 
+        - Load data from CSV files located in the 'CSV file rep' directory
+        - Preprocess the loaded data by extracting and concatenating relevant features
+        - Configure the parameters for a time series classification model
+        - Train a single or multiple experiments using the configured model
+        - Save the trained model and relevant metadata to a file
+
+        The class has several attributes that store the preprocessed data, such as `data_current_beg`, `data_current_end`, `data_voltage_beg`, `data_voltage_end`, `data_current_beg_ang`, `data_current_end_ang`, `data_voltage_beg_ang`, and `data_voltage_end_ang`.
+
+        The `fit()` method is the main entry point for training a time series classification model. It takes an optional `exp` parameter to specify the experiment type, and an optional `timenow` parameter to provide the current timestamp. If `exp` and `timenow` are not provided, the method will use the `exp_type` attribute of the `LearnProcess` instance.
+
+        The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
+        """
+        
     def __init__(
             self,
-            exp_type = None
+            exp_type = None,
+            fit_type = 'forest'
             ):
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
@@ -51,6 +68,11 @@ class LearnProcess:
             'voltage angle end'
         ]
         self.exp_type = exp_type
+        self.fit_type = fit_type
+        self.fit_library = {
+            'forest': tscf,
+            'hydra': hydrc
+        }
 
     def _load_data(self):
         """
@@ -318,7 +340,8 @@ class LearnProcess:
         Returns:
             dict: A dictionary containing the configured parameters for the time series classification model.
         """
-                
+        n_kernels = 2,
+        n_groups = 4,        
         base_estimator=None,
         n_estimators=20,
         n_intervals="sqrt",
@@ -327,7 +350,7 @@ class LearnProcess:
         time_limit_in_minutes=None,
         contract_max_n_estimators=50,
         random_state=None,
-        n_jobs=14,
+        n_jobs=5,
         parallel_backend= 'loky'
         self.config = {
              'base_estimator': base_estimator,
@@ -339,7 +362,9 @@ class LearnProcess:
              'contract_max_n_estimators': contract_max_n_estimators,
              'random_state': random_state,
              'n_jobs': n_jobs,
-             'parallel_backend': parallel_backend
+             'parallel_backend': parallel_backend,
+             'n_groups': n_groups,
+             'n_kernels': n_kernels
         }
         return self.config
     
@@ -407,14 +432,14 @@ class LearnProcess:
             config = LearnProcess._configuration(self)
             X = LearnProcess._trainData_multi_exp(self, exp)
             Y = LearnProcess._aimData(self)
-            model, acc, report = tscf(config, X, Y).main()
+            model, acc, report = self.fit_library[self.fit_type](config, X, Y).main()
             LearnProcess._save_model(self, model, exp, acc, report, timenow)
         else:
             print('Training the model: ', self.exp_type)
             config = LearnProcess._configuration(self)
             X = LearnProcess._trainData_one_exp(self)
             Y = LearnProcess._aimData(self)
-            model, acc, report = tscf(config, X, Y).main()
+            model, acc, report = self.fit_library[self.fit_type](config, X, Y).main()
             timenow = LearnProcess._timenow(self)
             LearnProcess._save_model(self, model, self.exp_type, acc, report, timenow)
         return model, acc, report

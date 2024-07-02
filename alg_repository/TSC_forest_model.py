@@ -1,9 +1,14 @@
 from aeon.classification.interval_based import TimeSeriesForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import (accuracy_score, classification_report,
+                              precision_score, recall_score, f1_score, 
+                              confusion_matrix, roc_curve, auc)
+from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
-
+import seaborn as sns
+import pandas as pd
 import numpy as np
+import datetime
 
 class TimeSeriesClassifierForest:
     """
@@ -113,23 +118,97 @@ class TimeSeriesClassifierForest:
         model = self.model
 
         Y_pred = model.predict(X_test)
+        Y_pred_proba = model.predict_proba(X_test)
 
         accuracy = accuracy_score(Y_test, Y_pred)
         report = classification_report(Y_test, Y_pred, output_dict=True, zero_division=0 )
         print("Accuracy:", accuracy)
         print("\nClassification Report:\n", classification_report(Y_test, Y_pred))
-
-        # Визуализация процессов
-        plt.figure(figsize=(10, 6))
-        plt.scatter(range(len(Y_test)), Y_test, marker='*', label="True Labels", color="green")
-        plt.scatter(range(len(Y_pred)), Y_pred, marker='o', facecolors='none', edgecolors='r',
-                     label="Predicted Labels", color="red", s=30)
-        plt.xlabel("Sample Index")
-        plt.ylabel("Label")
-        plt.title("True vs Predicted Labels")
-        plt.legend()
-        plt.show()
+        TimeSeriesClassifierForest.visualization(self, Y_test, Y_pred, Y_pred_proba)
         return accuracy, report
+    
+    
+    def visualization(self, Y_test, Y_pred, Y_pred_proba):
+        """
+        Visualizes the true and predicted labels for the test dataset.
+        
+        This method creates a scatter plot that displays the true labels (marked with green asterisks) and the predicted labels (marked with red circles) for the test dataset. The plot is labeled with the x-axis as "Sample Index" and the y-axis as "Label", and the title is "True vs Predicted Labels". The legend distinguishes between the true and predicted labels.
+        """
+        # Визуализация результатов
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 10))
+        fig.suptitle("Time Series Classification Results", fontsize=16)
+
+        # Истинные и предсказанные метки
+        axes[0, 0].scatter(range(len(Y_test)), Y_test, marker='*', label="True Labels", color="green")
+        axes[0, 0].scatter(range(len(Y_pred)), Y_pred, marker='o', facecolors='none', edgecolors='r',
+                           label="Predicted Labels", color="red", s=30)
+        axes[0, 0].set_xlabel("Sample Index")
+        axes[0, 0].set_ylabel("Class Label")
+        axes[0, 0].set_title("True vs Predicted Labels")
+        axes[0, 0].legend()
+
+        # Метрики производительности
+        precision = precision_score(Y_test, Y_pred, average=None)
+        recall = recall_score(Y_test, Y_pred, average=None)
+        f1 = f1_score(Y_test, Y_pred, average=None)
+        metrics_df = pd.DataFrame({"Precision": precision, "Recall": recall, "F1-Score": f1}, index=np.unique(Y_test))
+        sns.heatmap(metrics_df, annot=True, cmap="YlGnBu", ax=axes[0, 1])
+        axes[0, 1].set_title("Performance Metrics")
+
+        # Матрица ошибок
+        cm = confusion_matrix(Y_test, Y_pred)
+        sns.heatmap(cm, annot=True, cmap="YlGnBu", ax=axes[1, 0])
+        axes[1, 0].set_title("Confusion Matrix")
+        axes[1, 0].set_xlabel("Predicted Label")
+        axes[1, 0].set_ylabel("True Label")
+        
+        # ROC кривая и AUC
+        n_classes = len(np.unique(Y_test))
+        Y_test_bin = label_binarize(Y_test, classes=np.unique(Y_test))
+
+        if n_classes == 2:
+            fpr, tpr, _ = roc_curve(Y_test, Y_pred_proba[:, 1])
+            roc_auc = auc(fpr, tpr)
+            axes[1, 1].plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+            axes[1, 1].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            axes[1, 1].set_xlim([0.0, 1.0])
+            axes[1, 1].set_ylim([0.0, 1.05])
+            axes[1, 1].set_xlabel('False Positive Rate')
+            axes[1, 1].set_ylabel('True Positive Rate')
+            axes[1, 1].set_title('Receiver Operating Characteristic (ROC) Curve')
+            axes[1, 1].legend(loc="lower right")
+        else:
+            for i in range(n_classes):
+                fpr, tpr, _ = roc_curve(Y_test_bin[:, i], Y_pred_proba[:, i]) # type: ignore
+                roc_auc = auc(fpr, tpr)
+                axes[1, 1].plot(fpr, tpr, lw=2, label=f'ROC curve of class {i} (AUC = {roc_auc:.2f})')
+
+            axes[1, 1].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            axes[1, 1].set_xlim([0.0, 1.0])
+            axes[1, 1].set_ylim([0.0, 1.05])
+            axes[1, 1].set_xlabel('False Positive Rate')
+            axes[1, 1].set_ylabel('True Positive Rate')
+            axes[1, 1].set_title('Receiver Operating Characteristic (ROC) Curve')
+            axes[1, 1].legend(loc="lower right")
+
+        # Сохранение графиков
+        
+        plt.tight_layout()
+    
+        plt.savefig("graf\\classification_results_" 
+                    + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
+                    + ".png", dpi=500, bbox_inches="tight")    
+        ## Визуализация процессов
+        #plt.figure(figsize=(10, 6))
+        #plt.scatter(range(len(Y_test)), Y_test, marker='*', label="True Labels", color="green")
+        #plt.scatter(range(len(Y_pred)), Y_pred, marker='o', facecolors='none', edgecolors='r',
+        #             label="Predicted Labels", color="red", s=30)
+        #plt.xlabel("Sample Index")
+        #plt.ylabel("Label")
+        #plt.title("True vs Predicted Labels")
+        #plt.legend()
+        #plt.show()
+        
 
     def main(self):
         """
