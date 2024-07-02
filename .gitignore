@@ -3125,3 +3125,8 @@ Model/model_29_06_2024_22_50/voltage begin.json
 Model/model_29_06_2024_22_50/voltage begin.pkl
 Model/model_29_06_2024_22_50/voltage end.json
 Model/model_29_06_2024_22_50/voltage end.pkl
+text/readme.txt
+trash/ml_model.ipynb
+trash/test_code.ipynb
+trash/test.ipynb
+trash/train_data_preproc.ipynb
