@@ -1,6 +1,7 @@
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
+from alg_repository.PMU_symmetrical_components import PMU_symmetrical_components as pmu_sc
 import json
 import joblib
 import numpy as np
@@ -10,20 +11,16 @@ import os
 
 class LearnProcess:
     """
-        The `LearnProcess` class is responsible for loading, preprocessing, and training time series classification models. It provides methods to:
-
-        - Load data from CSV files located in the 'CSV file rep' directory
-        - Preprocess the loaded data by extracting and concatenating relevant features
-        - Configure the parameters for a time series classification model
-        - Train a single or multiple experiments using the configured model
-        - Save the trained model and relevant metadata to a file
-
-        The class has several attributes that store the preprocessed data, such as `data_current_beg`, `data_current_end`, `data_voltage_beg`, `data_voltage_end`, `data_current_beg_ang`, `data_current_end_ang`, `data_voltage_beg_ang`, and `data_voltage_end_ang`.
-
-        The `fit()` method is the main entry point for training a time series classification model. It takes an optional `exp` parameter to specify the experiment type, and an optional `timenow` parameter to provide the current timestamp. If `exp` and `timenow` are not provided, the method will use the `exp_type` attribute of the `LearnProcess` instance.
-
-        The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
-        """
+    The `LearnProcess` class is responsible for loading, preprocessing, and training time series classification models. It provides methods to:
+    - Load data from CSV files located in the 'CSV file rep' directory
+    - Preprocess the loaded data by extracting and concatenating relevant features
+    - Configure the parameters for a time series classification model
+    - Train a single or multiple experiments using the configured model
+    - Save the trained model and relevant metadata to a file
+    The class has several attributes that store the preprocessed data, such as `data_current_beg`, `data_current_end`, `data_voltage_beg`, `data_voltage_end`, `data_current_beg_ang`, `data_current_end_ang`, `data_voltage_beg_ang`, and `data_voltage_end_ang`.
+    The `fit()` method is the main entry point for training a time series classification model. It takes an optional `exp` parameter to specify the experiment type, and an optional `timenow` parameter to provide the current timestamp. If `exp` and `timenow` are not provided, the method will use the `exp_type` attribute of the `LearnProcess` instance.
+    The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
+    """
         
     def __init__(
             self,
@@ -77,9 +74,9 @@ class LearnProcess:
     def _load_data(self):
         """
         Loads the data for the time series classification model.
-        
-        This method loads the current and voltage data for the beginning and end of each experiment from CSV files located in the 'CSV file rep' directory. It then renames the columns of the data frames to match the experiment numbers and assigns them to the corresponding attributes of the LearnProcess instance.
-        
+        This method loads the current and voltage data for the beginning and end of each experiment from
+        CSV files located in the 'CSV file rep' directory. It then renames the columns of the data frames
+        to match the experiment numbers and assigns them to the corresponding attributes of the LearnProcess instance.
         Returns:
             LearnProcess: The updated LearnProcess instance with the loaded data.
         """
@@ -127,42 +124,75 @@ class LearnProcess:
         self.current_A_begin = rename_columns(current_A_begin)
         self.current_B_begin = rename_columns(current_B_begin)
         self.current_C_begin = rename_columns(current_C_begin)
+        self.current_A_end = rename_columns(current_A_end)
+        self.current_B_end = rename_columns(current_B_end)
+        self.current_C_end = rename_columns(current_C_end)
         self.current_A_angle_begin = rename_columns(current_A_angle_begin)
         self.current_A_angle_end =  rename_columns(current_A_angle_end)
         self.current_B_angle_begin = rename_columns(current_B_angle_begin)
         self.current_B_angle_end = rename_columns(current_B_angle_end)
         self.current_C_angle_begin = rename_columns(current_C_angle_begin)
         self.current_C_angle_end = rename_columns(current_C_angle_end)
-        self.current_A_begin = rename_columns(current_A_begin)
-        self.current_A_end = rename_columns(current_A_end)
-        self.current_B_begin = rename_columns(current_B_begin)
-        self.current_B_end = rename_columns(current_B_end)
-        self.current_C_begin = rename_columns(current_C_begin)
-        self.current_C_end = rename_columns(current_C_end)
-        self.voltage_A_angle_begin = rename_columns(voltage_A_angle_begin)
-        self.voltage_A_angle_end = rename_columns(voltage_A_angle_end)
-        self.voltage_B_angle_begin = rename_columns(voltage_B_angle_begin)
-        self.voltage_B_angle_end = rename_columns(voltage_B_angle_end)
-        self.voltage_C_angle_begin = rename_columns(voltage_C_angle_begin)
-        self.voltage_C_angle_end = rename_columns(voltage_C_angle_end)
         self.voltage_A_begin = rename_columns(voltage_A_begin)
         self.voltage_A_end = rename_columns(voltage_A_end)
         self.voltage_B_begin = rename_columns(voltage_B_begin)
         self.voltage_B_end = rename_columns(voltage_B_end)
         self.voltage_C_begin = rename_columns(voltage_C_begin)
         self.voltage_C_end = rename_columns(voltage_C_end)
+        self.voltage_A_angle_begin = rename_columns(voltage_A_angle_begin)
+        self.voltage_A_angle_end = rename_columns(voltage_A_angle_end)
+        self.voltage_B_angle_begin = rename_columns(voltage_B_angle_begin)
+        self.voltage_B_angle_end = rename_columns(voltage_B_angle_end)
+        self.voltage_C_angle_begin = rename_columns(voltage_C_angle_begin)
+        self.voltage_C_angle_end = rename_columns(voltage_C_angle_end)
         return self
     
+    def _symmetrical_components(self):
+
+        self.current_seq_begin = pmu_sc(
+            self.current_A_begin,
+            self.current_B_begin,
+            self.current_C_begin,
+            self.current_A_angle_begin,
+            self.current_B_angle_begin,
+            self.current_C_angle_begin
+        ).vectors_calculation()
+        self.current_seq_end = pmu_sc(
+            self.current_A_end,
+            self.current_B_end,
+            self.current_C_end,
+            self.current_A_angle_end,
+            self.current_B_angle_end,
+            self.current_C_angle_end
+        ).vectors_calculation()
+        self.voltage_seq_begin = pmu_sc(
+            self.voltage_A_begin,
+            self.voltage_B_begin,
+            self.voltage_C_begin,
+            self.voltage_A_angle_begin,
+            self.voltage_B_angle_begin,
+            self.voltage_C_angle_begin
+        ).vectors_calculation()
+        self.voltage_seq_end = pmu_sc(
+            self.voltage_A_end,
+            self.voltage_B_end,
+            self.voltage_C_end,
+            self.voltage_A_angle_end,
+            self.voltage_B_angle_end,
+            self.voltage_C_angle_end
+        ).vectors_calculation()
+
+        return self
+
     def _preprocessing(self):
         """
         Preprocesses the data for the time series classification model.
-        
-        This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment. It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables. Finally, it concatenates the data into larger arrays and assigns them to the corresponding attributes of the LearnProcess instance.
-        
+        This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment.
+        It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables.
+        Finally, it concatenates the data into larger arrays and assigns them to the corresponding attributes of the LearnProcess instance.
         Returns:
             LearnProcess: The updated LearnProcess instance with the preprocessed data.
-        """
-                
+        """      
         self = LearnProcess._load_data(self)
 
         # Инициализация временных переменных для выгрузки экспериментов
@@ -250,11 +280,9 @@ class LearnProcess:
     def _aimData(self):
         """
         Loads and returns the best method from a file located in the 'method train result' directory.
-        
         Returns:
             numpy.ndarray: The best method, transposed.
-        """
-                
+        """     
         file_path = 'method train result\\'
         file_names = os.listdir(file_path)
         best_method = di(';',file_path + file_names[0]).main_process()
@@ -264,11 +292,9 @@ class LearnProcess:
     def _trainData_one_exp(self):
         """
         Trains the data for a single experiment.
-        
         Returns:
             numpy.ndarray: The training data for the specified experiment type.
-        """
-                
+        """         
         self = LearnProcess._preprocessing(self)
    
         variable_name = self.exp_type
@@ -294,10 +320,10 @@ class LearnProcess:
     def _trainData_multi_exp(self, exp = None):
         """
         Trains the data for multiple experiments.
-
         Args:
-            exp (str, optional): The experiment type to train the data for. Can be one of 'current begin', 'current end', 'voltage begin', 'voltage end', 'current begin angle', 'current end angle', 'voltage begin angle', or 'voltage end angle'.
-
+            exp (str, optional): The experiment type to train the data for. Can be one of 'current begin', 
+            'current end', 'voltage begin', 'voltage end', 'current begin angle', 'current end angle',
+            'voltage begin angle', or 'voltage end angle'.
         Returns:
             numpy.ndarray: The training data for the specified experiment type.
         """
@@ -336,10 +362,13 @@ class LearnProcess:
             random_state (int, optional): The random state to use for reproducibility.
             n_jobs (int, optional): The number of jobs to run in parallel.
             parallel_backend (str, optional): The parallel backend to use for the model training.
+            n_kernels (int, optional): The number of kernels to use.
+            n_groups (int, optional): The number of groups to use.
         
         Returns:
             dict: A dictionary containing the configured parameters for the time series classification model.
         """
+        
         n_kernels = 2,
         n_groups = 4,        
         base_estimator=None,
@@ -458,5 +487,5 @@ class LearnProcess:
         timenow = LearnProcess._timenow(self)
         for exp in self.exp_library:
             LearnProcess.fit(self, exp, timenow)
-        return 'Могло быть лучше но так получилось'
+        return 'Могло быть лучше, но так получилось'
 
