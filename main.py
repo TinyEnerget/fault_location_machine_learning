@@ -21,39 +21,49 @@ class LearnProcess:
     The `fit()` method is the main entry point for training a time series classification model. It takes an optional `exp` parameter to specify the experiment type, and an optional `timenow` parameter to provide the current timestamp. If `exp` and `timenow` are not provided, the method will use the `exp_type` attribute of the `LearnProcess` instance.
     The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
     """
-        
     def __init__(
             self,
             exp_type = None,
             fit_type = 'forest'
             ):
+        """
+        Initializes the `LearnProcess` class with the specified experiment type and fit type.
+        
+        The class has several attributes that store the preprocessed data, such as `current_A_begin`, `current_B_begin`, `current_C_begin`, `current_A_angle_begin`, `current_B_angle_begin`, `current_C_angle_begin`, `current_A_end`, `current_B_end`, `current_C_end`, `current_A_angle_end`, `current_B_angle_end`, `current_C_angle_end`, `voltage_A_begin`, `voltage_B_begin`, `voltage_C_begin`, `voltage_A_angle_begin`, `voltage_B_angle_begin`, `voltage_C_angle_begin`, `voltage_A_end`, `voltage_B_end`, `voltage_C_end`, `voltage_A_angle_end`, `voltage_B_angle_end`, and `voltage_C_angle_end`.
+        
+        The `exp_library` attribute is a list of experiment types, and the `fit_library` attribute is a dictionary that maps fit types to their corresponding classifier classes.
+        
+        Args:
+            exp_type (str, optional): The experiment type. Defaults to `None`.
+            fit_type (str, optional): The fit type. Defaults to `'forest'`.
+        """
+                
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
         self.current_C_begin = pd.DataFrame()
         self.current_A_angle_begin = pd.DataFrame()
-        self.current_A_angle_end =  pd.DataFrame()
         self.current_B_angle_begin = pd.DataFrame()
-        self.current_B_angle_end = pd.DataFrame()
         self.current_C_angle_begin = pd.DataFrame()
-        self.current_C_angle_end = pd.DataFrame()
-        self.current_A_begin = pd.DataFrame()
         self.current_A_end = pd.DataFrame()
-        self.current_B_begin = pd.DataFrame()
         self.current_B_end = pd.DataFrame()
-        self.current_C_begin = pd.DataFrame()
         self.current_C_end = pd.DataFrame()
-        self.voltage_A_angle_begin = pd.DataFrame()
-        self.voltage_A_angle_end = pd.DataFrame()
-        self.voltage_B_angle_begin = pd.DataFrame()
-        self.voltage_B_angle_end = pd.DataFrame()
-        self.voltage_C_angle_begin = pd.DataFrame()
-        self.voltage_C_angle_end =pd.DataFrame()
+        self.current_A_angle_end =  pd.DataFrame()
+        self.current_B_angle_end = pd.DataFrame()
+        self.current_C_angle_end = pd.DataFrame()
+
         self.voltage_A_begin = pd.DataFrame()
-        self.voltage_A_end = pd.DataFrame()
         self.voltage_B_begin = pd.DataFrame()
+        self.voltage_C_begin = pd.DataFrame()   
+        self.voltage_A_angle_begin = pd.DataFrame()
+        self.voltage_B_angle_begin = pd.DataFrame()
+        self.voltage_C_angle_begin =pd.DataFrame() 
+        self.voltage_A_end = pd.DataFrame()
         self.voltage_B_end = pd.DataFrame()
-        self.voltage_C_begin = pd.DataFrame()
-        self.voltage_C_end = pd.DataFrame()
+        self.voltage_C_end = pd.DataFrame()            
+        self.voltage_A_angle_end = pd.DataFrame()
+        self.voltage_B_angle_end = pd.DataFrame()
+        self.voltage_C_angle_end =pd.DataFrame()        
+
         self.exp_library = [
             'current begin',
             'current end',
@@ -71,6 +81,56 @@ class LearnProcess:
             'hydra': hydrc
         }
 
+    def _fileclassifier(self,
+                        file_path: str,
+                        file_names: list
+                        ):
+        """
+        Classifies the files in the specified directory and assigns the data to the corresponding attributes of the LearnProcess instance.
+        
+        Args:
+            file_path (str): The path to the directory containing the CSV files.
+            file_names (list): A list of the file names in the directory.
+        
+        Returns:
+            LearnProcess: The updated LearnProcess instance with the loaded data.
+        """
+                
+        def rename_columns(
+                  data: pd.DataFrame
+                           ) -> pd.DataFrame:
+            columns_name = []
+            for indx in range(len(data.columns)):
+                columns_name.append('exp ' + str(indx + 1))
+
+            data.columns = columns_name
+            return data
+
+        measurement_types = {
+                'C': ('current_A', 'current_B', 'current_C'),
+                'V': ('voltage_A', 'voltage_B', 'voltage_C'),
+                'AC': ('current_A_angle', 'current_B_angle', 'current_C_angle'),
+                'VC': ('voltage_A_angle', 'voltage_B_angle', 'voltage_C_angle')
+                }
+
+        for name in file_names:     
+            word_list = name.split('.')[0].split('_')
+            try:
+                meas_type, phase, side = word_list[2], word_list[3], word_list[4]
+            except IndexError:
+                self.time = di(',',file_path + '//' + name).main_process()
+                continue
+            
+            if meas_type in measurement_types:
+                attr_names = measurement_types[meas_type]
+                attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
+                print('\n', attr_name, '\n', file_path + '//' + name)
+                setattr(self, attr_name,
+                         rename_columns(di(',', file_path + '//' + name).main_process()))
+                print("Completed!",'\n')
+            
+        return self
+
     def _load_data(self):
         """
         Loads the data for the time series classification model.
@@ -79,76 +139,30 @@ class LearnProcess:
         to match the experiment numbers and assigns them to the corresponding attributes of the LearnProcess instance.
         Returns:
             LearnProcess: The updated LearnProcess instance with the loaded data.
-        """
-                
+        """  
         # Загрузка данных
-        file_names = os.listdir('CSV file rep')
-        file_path = 'CSV file rep/'
-        current_A_angle_begin = di(',',file_path + file_names[0]).main_process()
-        current_A_angle_end = di(',',file_path + file_names[1]).main_process()
-        current_B_angle_begin = di(',',file_path + file_names[2]).main_process()
-        current_B_angle_end = di(',',file_path + file_names[3]).main_process()
-        current_C_angle_begin = di(',',file_path + file_names[4]).main_process()
-        current_C_angle_end = di(',',file_path + file_names[5]).main_process()
-        current_A_begin = di(',',file_path + file_names[6]).main_process()
-        current_A_end = di(',',file_path + file_names[7]).main_process()
-        current_B_begin = di(',',file_path + file_names[8]).main_process()
-        current_B_end = di(',',file_path + file_names[9]).main_process()
-        current_C_begin = di(',',file_path + file_names[10]).main_process()
-        current_C_end = di(',',file_path + file_names[11]).main_process()
-        voltage_A_angle_begin = di(',',file_path + file_names[12]).main_process()
-        voltage_A_angle_end = di(',',file_path + file_names[13]).main_process()
-        voltage_B_angle_begin = di(',',file_path + file_names[14]).main_process()
-        voltage_B_angle_end = di(',',file_path + file_names[15]).main_process()
-        voltage_C_angle_begin = di(',',file_path + file_names[16]).main_process()
-        voltage_C_angle_end = di(',',file_path + file_names[17]).main_process()
-        voltage_A_begin = di(',',file_path + file_names[18]).main_process()
-        voltage_A_end = di(',',file_path + file_names[19]).main_process()
-        voltage_B_begin = di(',',file_path + file_names[20]).main_process()
-        voltage_B_end = di(',',file_path + file_names[21]).main_process()
-        voltage_C_begin = di(',',file_path + file_names[22]).main_process()
-        voltage_C_end = di(',',file_path + file_names[23]).main_process()
-        self.time = di(',',file_path + file_names[24]).main_process()
-        #time['Time'] = pd.to_datetime(time['Time'], unit='s', origin='unix').dt.strftime('%S.%f')
+        file_path = 'CSV file rep'
+        file_names = os.listdir(file_path)
+        self = self._fileclassifier(file_path, file_names)
 
-        def rename_columns(
-                  data_current: pd.DataFrame
-                           ) -> pd.DataFrame:
-            columns_name = []
-            for indx in range(len(data_current.columns)):
-                columns_name.append('exp ' + str(indx + 1))
-
-            data_current.columns = columns_name
-            return data_current
-
-        self.current_A_begin = rename_columns(current_A_begin)
-        self.current_B_begin = rename_columns(current_B_begin)
-        self.current_C_begin = rename_columns(current_C_begin)
-        self.current_A_end = rename_columns(current_A_end)
-        self.current_B_end = rename_columns(current_B_end)
-        self.current_C_end = rename_columns(current_C_end)
-        self.current_A_angle_begin = rename_columns(current_A_angle_begin)
-        self.current_A_angle_end =  rename_columns(current_A_angle_end)
-        self.current_B_angle_begin = rename_columns(current_B_angle_begin)
-        self.current_B_angle_end = rename_columns(current_B_angle_end)
-        self.current_C_angle_begin = rename_columns(current_C_angle_begin)
-        self.current_C_angle_end = rename_columns(current_C_angle_end)
-        self.voltage_A_begin = rename_columns(voltage_A_begin)
-        self.voltage_A_end = rename_columns(voltage_A_end)
-        self.voltage_B_begin = rename_columns(voltage_B_begin)
-        self.voltage_B_end = rename_columns(voltage_B_end)
-        self.voltage_C_begin = rename_columns(voltage_C_begin)
-        self.voltage_C_end = rename_columns(voltage_C_end)
-        self.voltage_A_angle_begin = rename_columns(voltage_A_angle_begin)
-        self.voltage_A_angle_end = rename_columns(voltage_A_angle_end)
-        self.voltage_B_angle_begin = rename_columns(voltage_B_angle_begin)
-        self.voltage_B_angle_end = rename_columns(voltage_B_angle_end)
-        self.voltage_C_angle_begin = rename_columns(voltage_C_angle_begin)
-        self.voltage_C_angle_end = rename_columns(voltage_C_angle_end)
         return self
     
     def _symmetrical_components(self):
-
+        """
+        Calculates the symmetrical components of the current and voltage signals.
+        
+        This method uses the `pmu_sc` function to calculate the positive, negative, and zero sequence components of the current and voltage signals for the beginning and end of each experiment.
+        
+        The calculated sequence components are stored in the following attributes of the `LearnProcess` instance:
+        - `current_seq_begin`: The sequence components of the current signals at the beginning of each experiment.
+        - `current_seq_end`: The sequence components of the current signals at the end of each experiment.
+        - `voltage_seq_begin`: The sequence components of the voltage signals at the beginning of each experiment.
+        - `voltage_seq_end`: The sequence components of the voltage signals at the end of each experiment.
+        
+        Returns:
+            LearnProcess: The updated `LearnProcess` instance with the calculated sequence components.
+        """
+                
         self.current_seq_begin = pmu_sc(
             self.current_A_begin,
             self.current_B_begin,
