@@ -41,25 +41,31 @@ class LearnProcess:
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
         self.current_C_begin = pd.DataFrame()
+
         self.current_A_angle_begin = pd.DataFrame()
         self.current_B_angle_begin = pd.DataFrame()
         self.current_C_angle_begin = pd.DataFrame()
+
         self.current_A_end = pd.DataFrame()
         self.current_B_end = pd.DataFrame()
         self.current_C_end = pd.DataFrame()
+
         self.current_A_angle_end =  pd.DataFrame()
         self.current_B_angle_end = pd.DataFrame()
         self.current_C_angle_end = pd.DataFrame()
 
         self.voltage_A_begin = pd.DataFrame()
         self.voltage_B_begin = pd.DataFrame()
-        self.voltage_C_begin = pd.DataFrame()   
+        self.voltage_C_begin = pd.DataFrame()  
+
         self.voltage_A_angle_begin = pd.DataFrame()
         self.voltage_B_angle_begin = pd.DataFrame()
-        self.voltage_C_angle_begin =pd.DataFrame() 
+        self.voltage_C_angle_begin =pd.DataFrame()
+
         self.voltage_A_end = pd.DataFrame()
         self.voltage_B_end = pd.DataFrame()
-        self.voltage_C_end = pd.DataFrame()            
+        self.voltage_C_end = pd.DataFrame()
+
         self.voltage_A_angle_end = pd.DataFrame()
         self.voltage_B_angle_end = pd.DataFrame()
         self.voltage_C_angle_end =pd.DataFrame()        
@@ -80,6 +86,10 @@ class LearnProcess:
             'forest': tscf,
             'hydra': hydrc
         }
+        self.best_method = self._aimData()
+
+        self = self._load_data()
+
 
     def _fileclassifier(self,
                         file_path: str,
@@ -207,62 +217,42 @@ class LearnProcess:
         Returns:
             LearnProcess: The updated LearnProcess instance with the preprocessed data.
         """      
-        self = LearnProcess._load_data(self)
-
-        # Инициализация временных переменных для выгрузки экспериментов
-        data_current_A_beg = []
-        data_current_B_beg = []
-        data_current_C_beg = []
-        data_current_A_end = []
-        data_current_B_end = []
-        data_current_C_end = []
-        data_voltage_A_beg = []
-        data_voltage_B_beg = []
-        data_voltage_C_beg = []
-        data_voltage_A_end = []
-        data_voltage_B_end = []
-        data_voltage_C_end = []
-        data_current_A_beg_ang = []
-        data_current_B_beg_ang = []
-        data_current_C_beg_ang = []
-        data_current_A_end_ang = []
-        data_current_B_end_ang = []
-        data_current_C_end_ang = []
-        data_voltage_A_beg_ang = []
-        data_voltage_B_beg_ang = []
-        data_voltage_C_beg_ang = []
-        data_voltage_A_end_ang = []
-        data_voltage_B_end_ang = []
-        data_voltage_C_end_ang = []
-
+        
         # Сборка групп данных
-        for indx in range(3000):
-            # Подгрузка данных и сбор их в отдельные ячейки по экспериментам
-            exp_name = 'exp ' + str(indx + 1)
-            data_current_A_beg.append([self.current_A_begin[exp_name].reset_index(drop=True).values])
-            data_current_B_beg.append([self.current_B_begin[exp_name].reset_index(drop=True).values])
-            data_current_C_beg.append([self.current_C_begin[exp_name].reset_index(drop=True).values])
-            data_current_A_end.append([self.current_A_end[exp_name].reset_index(drop=True).values])
-            data_current_B_end.append([self.current_B_end[exp_name].reset_index(drop=True).values])
-            data_current_C_end.append([self.current_C_end[exp_name].reset_index(drop=True).values])
-            data_voltage_A_beg.append([self.voltage_A_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_B_beg.append([self.voltage_B_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_C_beg.append([self.voltage_C_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_A_end.append([self.voltage_A_end[exp_name].reset_index(drop=True).values])
-            data_voltage_B_end.append([self.voltage_B_end[exp_name].reset_index(drop=True).values])
-            data_voltage_C_end.append([self.voltage_C_end[exp_name].reset_index(drop=True).values])
-            data_current_A_beg_ang.append([self.current_A_angle_begin[exp_name].reset_index(drop=True).values])
-            data_current_B_beg_ang.append([self.current_B_angle_begin[exp_name].reset_index(drop=True).values])
-            data_current_C_beg_ang.append([self.current_C_angle_begin[exp_name].reset_index(drop=True).values])
-            data_current_A_end_ang.append([self.current_A_angle_end[exp_name].reset_index(drop=True).values])
-            data_current_B_end_ang.append([self.current_B_angle_end[exp_name].reset_index(drop=True).values])
-            data_current_C_end_ang.append([self.current_C_angle_end[exp_name].reset_index(drop=True).values])
-            data_voltage_A_beg_ang.append([self.voltage_A_angle_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_B_beg_ang.append([self.voltage_B_angle_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_C_beg_ang.append([self.voltage_C_angle_begin[exp_name].reset_index(drop=True).values])
-            data_voltage_A_end_ang.append([self.voltage_A_angle_end[exp_name].reset_index(drop=True).values])
-            data_voltage_B_end_ang.append([self.voltage_B_angle_end[exp_name].reset_index(drop=True).values])
-            data_voltage_C_end_ang.append([self.voltage_C_angle_end[exp_name].reset_index(drop=True).values])
+        exp_names = ['exp ' + str(indx + 1) for indx in range(3000)]
+        
+        data_current_A_beg = [[self.current_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_B_beg = [[self.current_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_C_beg = [[self.current_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_current_A_end = [[self.current_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_B_end = [[self.current_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_C_end = [[self.current_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_voltage_A_beg = [[self.voltage_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_B_beg = [[self.voltage_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_C_beg = [[self.voltage_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_voltage_A_end = [[self.voltage_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_B_end = [[self.voltage_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_C_end = [[self.voltage_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_current_A_beg_ang = [[self.current_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_B_beg_ang = [[self.current_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_C_beg_ang = [[self.current_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_current_A_end_ang = [[self.current_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_B_end_ang = [[self.current_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_current_C_end_ang = [[self.current_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_voltage_A_beg_ang = [[self.voltage_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_B_beg_ang = [[self.voltage_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_C_beg_ang = [[self.voltage_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+
+        data_voltage_A_end_ang = [[self.voltage_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_B_end_ang = [[self.voltage_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        data_voltage_C_end_ang = [[self.voltage_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+
 
         # Сборка данных в один список
         self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
