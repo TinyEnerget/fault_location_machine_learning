@@ -86,6 +86,7 @@ class LearnProcess:
             'forest': tscf,
             'hydra': hydrc
         }
+        
         self.best_method = self._aimData()
 
         self = self._load_data()
