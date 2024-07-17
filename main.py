@@ -1,3 +1,4 @@
+from flask import config
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
@@ -22,22 +23,18 @@ class LearnProcess:
     The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
     """
     def __init__(
-            self,
-            exp_type = None,
-            fit_type = 'forest'
+            self
             ):
-        """
-        Initializes the `LearnProcess` class with the specified experiment type and fit type.
         
-        The class has several attributes that store the preprocessed data, such as `current_A_begin`, `current_B_begin`, `current_C_begin`, `current_A_angle_begin`, `current_B_angle_begin`, `current_C_angle_begin`, `current_A_end`, `current_B_end`, `current_C_end`, `current_A_angle_end`, `current_B_angle_end`, `current_C_angle_end`, `voltage_A_begin`, `voltage_B_begin`, `voltage_C_begin`, `voltage_A_angle_begin`, `voltage_B_angle_begin`, `voltage_C_angle_begin`, `voltage_A_end`, `voltage_B_end`, `voltage_C_end`, `voltage_A_angle_end`, `voltage_B_angle_end`, and `voltage_C_angle_end`.
-        
-        The `exp_library` attribute is a list of experiment types, and the `fit_library` attribute is a dictionary that maps fit types to their corresponding classifier classes.
-        
-        Args:
-            exp_type (str, optional): The experiment type. Defaults to `None`.
-            fit_type (str, optional): The fit type. Defaults to `'forest'`.
-        """
-                
+
+        config = json.load(open('config//config.json'))
+
+        self.exp_list = config['feature']
+
+        self.fit_type = config['ml_model_type']
+
+        self.exp_file_path = config['experiment_files_path']
+
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
         self.current_C_begin = pd.DataFrame()
@@ -70,18 +67,49 @@ class LearnProcess:
         self.voltage_B_angle_end = pd.DataFrame()
         self.voltage_C_angle_end =pd.DataFrame()        
 
-        self.exp_library = [
-            'current begin',
-            'current end',
-            'voltage begin',
-            'voltage end',
-            'current angle begin',
-            'current angle end',
-            'voltage angle begin',
-            'voltage angle end'
-        ]
-        self.exp_type = exp_type
-        self.fit_type = fit_type
+        #self.exp_library = [
+        #    'current_A_begin',
+        #    'current_A_end',
+        #    'voltage_A_begin',
+        #    'voltage_A_end',
+        #    'current_A_angle_begin',
+        #    'current_A_angle_end',
+        #    'voltage_A_angle_begin',
+        #    'voltage_A_angle_end',
+#
+        #    'current_B_begin',
+        #    'current_B_end',
+        #    'voltage_B_begin',
+        #    'voltage_B_end',
+        #    'current_B_angle_begin',
+        #    'current_B_angle_end',
+        #    'voltage_B_angle_begin',
+        #    'voltage_B_angle_end',
+#
+        #    'current_C_begin',
+        #    'current_C_end',
+        #    'voltage_C_begin',
+        #    'voltage_C_end',
+        #    'current_C_angle_begin',
+        #    'current_C_angle_end',
+        #    'voltage_C_angle_begin',
+        #    'voltage_C_angle_end'
+        #]
+
+        self.measurement_types = {
+                'C': ('current_A', 'current_B', 'current_C'),
+                'V': ('voltage_A', 'voltage_B', 'voltage_C'),
+                'AC': ('current_A_angle', 'current_B_angle', 'current_C_angle'),
+                'VC': ('voltage_A_angle', 'voltage_B_angle', 'voltage_C_angle')
+                }
+        
+        self.measurement_types_100fps = {
+                'I mag': ('current_A', 'current_B', 'current_C'),
+                'U mag': ('voltage_A', 'voltage_B', 'voltage_C'),
+                'I angle': ('current_A_angle', 'current_B_angle', 'current_C_angle'),
+                'U angle': ('voltage_A_angle', 'voltage_B_angle', 'voltage_C_angle')
+                }
+
         self.fit_library = {
             'forest': tscf,
             'hydra': hydrc
@@ -97,7 +125,8 @@ class LearnProcess:
                         file_names: list
                         ):
         """
-        Classifies the files in the specified directory and assigns the data to the corresponding attributes of the LearnProcess instance.
+        Classifies the files in the specified directory and assigns the data to the corresponding
+          attributes of the LearnProcess instance.
         
         Args:
             file_path (str): The path to the directory containing the CSV files.
@@ -117,28 +146,41 @@ class LearnProcess:
             data.columns = columns_name
             return data
 
-        measurement_types = {
-                'C': ('current_A', 'current_B', 'current_C'),
-                'V': ('voltage_A', 'voltage_B', 'voltage_C'),
-                'AC': ('current_A_angle', 'current_B_angle', 'current_C_angle'),
-                'VC': ('voltage_A_angle', 'voltage_B_angle', 'voltage_C_angle')
-                }
+        #This part of code will be fixed in future work
 
-        for name in file_names:     
-            word_list = name.split('.')[0].split('_')
-            try:
-                meas_type, phase, side = word_list[2], word_list[3], word_list[4]
-            except IndexError:
-                self.time = di(',',file_path + '//' + name).main_process()
-                continue
-            
-            if meas_type in measurement_types:
-                attr_names = measurement_types[meas_type]
-                attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
-                print('\n', attr_name, '\n', file_path + '//' + name)
-                setattr(self, attr_name,
-                         rename_columns(di(',', file_path + '//' + name).main_process()))
-                print("Completed!",'\n')
+        if file_path == 'CSV PMU 100fps':
+            measurement_types = self.measurement_types_100fps
+            for name in file_names:     
+                word_list = name.split('.')[0].split('_')
+                try:
+                    meas_type, phase, side = word_list[1][0] + ' ' + word_list[3], word_list[1][1], word_list[2]
+                except IndexError:
+                    self.time = di(',',file_path + '//' + name).main_process()
+                    continue
+                if meas_type in measurement_types:
+                        attr_names = measurement_types[meas_type]
+                        attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
+                        print('\n', attr_name, '\n', file_path + '//' + name)
+                        setattr(self, attr_name,
+                                 rename_columns(di(',', file_path + '//' + name).main_process()))
+                        print("Completed!",'\n')
+
+        elif file_path == "CSV file rep":
+            measurement_types = self.measurement_types
+            for name in file_names:     
+                word_list = name.split('.')[0].split('_')
+                try:
+                    meas_type, phase, side = word_list[2], word_list[3], word_list[4]
+                except IndexError:
+                    self.time = di(',',file_path + '//' + name).main_process()
+                    continue
+                if meas_type in measurement_types:
+                    attr_names = measurement_types[meas_type]
+                    attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
+                    print('\n', attr_name, '\n', file_path + '//' + name)
+                    setattr(self, attr_name,
+                             rename_columns(di(',', file_path + '//' + name).main_process()))
+                    print("Completed!",'\n')
             
         return self
 
@@ -152,7 +194,8 @@ class LearnProcess:
             LearnProcess: The updated LearnProcess instance with the loaded data.
         """  
         # Загрузка данных
-        file_path = 'CSV file rep'
+        file_path = self.exp_file_path
+        print(file_path)
         file_names = os.listdir(file_path)
         self = self._fileclassifier(file_path, file_names)
 
@@ -173,7 +216,6 @@ class LearnProcess:
         Returns:
             LearnProcess: The updated `LearnProcess` instance with the calculated sequence components.
         """
-                
         self.current_seq_begin = pmu_sc(
             self.current_A_begin,
             self.current_B_begin,
@@ -209,77 +251,205 @@ class LearnProcess:
 
         return self
 
-    def _preprocessing(self):
-        """
-        Preprocesses the data for the time series classification model.
-        This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment.
-        It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables.
-        Finally, it concatenates the data into larger arrays and assigns them to the corresponding attributes of the LearnProcess instance.
-        Returns:
-            LearnProcess: The updated LearnProcess instance with the preprocessed data.
-        """      
+    #def _preprocessing(self):
+    #    """
+    #    Preprocesses the data for the time series classification model.
+    #    This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment.
+    #    It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables.
+    #    Finally, it concatenates the data into larger arrays and assigns them to the corresponding attributes of the LearnProcess instance.
+    #    Returns:
+    #        LearnProcess: The updated LearnProcess instance with the preprocessed data.
+    #    """ 
+    #    def concat_data(
+    #            df: pd.DataFrame, 
+    #            exp_names: list[str]) -> np.ndarray:
+    #        """
+    #        Concatenates the data for each experiment into a single array.
+    #        This method iterates through the experiments and concatenates the data for each experiment into a single array.
+    #        Args:
+    #            df: The data for each experiment.
+    #            exp_names: The names of the experiments.
+    #        Returns:
+    #            np.ndarray: The concatenated data for all experiments.
+    #        """
+    #        data_list = []
+    #        for exp in exp_names:
+    #            tmp = df[exp].reset_index(drop=True).values
+    #            data_list.append(tmp)
+    #        return np.ndarray(data_list)        
+    #    
+    #    # Сборка групп данных
+    #    exp_names = [f'exp {i+1}' for i in range(len(self.best_method))]
+    #    
+    #    sets = [
+    #        'current_begin',
+    #        'current_end',
+    #        'voltage_begin',
+    #        'voltage_end'
+    #        'current_angle_begin',
+    #        'current_angle_end',
+    #        'voltage_angle_begin',
+    #        'voltage_angle_end'
+    #    ]
+#
+    #    meases = [
+    #        'current_A_begin',
+    #        'current_A_end',
+    #        'voltage_A_begin',
+    #        'voltage_A_end',
+    #        'current_A_angle_begin',
+    #        'current_A_angle_end',
+    #        'voltage_A_angle_begin',
+    #        'voltage_A_angle_end',
+#
+    #        'current_B_begin',
+    #        'current_B_end',
+    #        'voltage_B_begin',
+    #        'voltage_B_end',
+    #        'current_B_angle_begin',
+    #        'current_B_angle_end',
+    #        'voltage_B_angle_begin',
+    #        'voltage_B_angle_end',
+#
+    #        'current_C_begin',
+    #        'current_C_end',
+    #        'voltage_C_begin',
+    #        'voltage_C_end',
+    #        'current_C_angle_begin',
+    #        'current_C_angle_end',
+    #        'voltage_C_angle_begin',
+    #        'voltage_C_angle_end'
+    #    ]
+    #    #self.exp_library
+    #    for set in sets:
+    #        for meas in meases:
+    #            data = np.concatenate(
+    #                [
+    #                    concat_data(getattr(self, f'{meas}'), exp_names),
+    #                ],
+    #                axis=1
+    #            )
+    #        setattr(self, f'data_{set}', data)
+#
+    #    return self
+
+
+        ## Сборка данных в один список
+        #self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
+        #                                  np.array(data_current_B_beg),
+        #                                  np.array(data_current_C_beg)), axis = 1)
+        #self.data_current_end = np.concatenate((np.array(data_current_A_end),
+        #                                  np.array(data_current_B_end),
+        #                                  np.array(data_current_C_end)), axis = 1)
+        #self.data_voltage_beg = np.concatenate((np.array(data_voltage_A_beg),
+        #                                  np.array(data_voltage_B_beg),
+        #                                  np.array(data_voltage_C_beg)), axis = 1)
+        #self.data_voltage_end = np.concatenate((np.array(data_voltage_A_end),
+        #                                  np.array(data_voltage_B_end),
+        #                                  np.array(data_voltage_C_end)), axis = 1)
+        #self.data_current_beg_ang = np.concatenate((np.array(data_current_A_beg_ang),
+        #                                       np.array(data_current_B_beg_ang),
+        #                                       np.array(data_current_C_beg_ang)), axis = 1)
+        #self.data_current_end_ang = np.concatenate((np.array(data_current_A_end_ang),
+        #                                       np.array(data_current_B_end_ang),
+        #                                       np.array(data_current_C_end_ang)), axis = 1)
+        #self.data_voltage_beg_ang = np.concatenate((np.array(data_voltage_A_beg_ang),
+        #                                       np.array(data_voltage_B_beg_ang),
+        #                                       np.array(data_voltage_C_beg_ang)), axis = 1)
+        #self.data_voltage_end_ang = np.concatenate((np.array(data_voltage_A_end_ang),
+        #                                       np.array(data_voltage_B_end_ang),
+        #                                       np.array(data_voltage_C_end_ang)), axis = 1)
+        #return self
+
+    def _preprocessing(self):  
+
+
+        def concat_data(
+                df: pd.DataFrame, 
+                exp_names: list[str]) -> np.ndarray:
+            """
+            Concatenates the data for each experiment into a single array.
+            This method iterates through the experiments and concatenates the data for each experiment into a single array.
+            Args:
+                df: The data for each experiment.
+                exp_names: The names of the experiments.
+            Returns:
+                np.ndarray: The concatenated data for all experiments.
+            """
+            return np.array([[df[exp].reset_index(drop=True).values] for exp in exp_names])   
         
         # Сборка групп данных
         exp_names = ['exp ' + str(indx + 1) for indx in range(3000)]
-        
-        data_current_A_beg = [[self.current_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_B_beg = [[self.current_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_C_beg = [[self.current_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
 
-        data_current_A_end = [[self.current_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_B_end = [[self.current_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_C_end = [[self.current_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        meases = self.exp_list
 
-        data_voltage_A_beg = [[self.voltage_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_B_beg = [[self.voltage_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_C_beg = [[self.voltage_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        for meas in meases:
+                data = np.concatenate(
+                    [
+                        concat_data(getattr(self, f'{meas}'), exp_names),
+                    ],
+                    axis=1
+                )
 
-        data_voltage_A_end = [[self.voltage_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_B_end = [[self.voltage_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_C_end = [[self.voltage_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_A_beg = concat_data(exp_names)
+        #data_current_B_beg = [[self.current_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_C_beg = [[self.current_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_current_A_end = [[self.current_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_B_end = [[self.current_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_C_end = [[self.current_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_voltage_A_beg = [[self.voltage_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_B_beg = [[self.voltage_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_C_beg = [[self.voltage_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_voltage_A_end = [[self.voltage_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_B_end = [[self.voltage_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_C_end = [[self.voltage_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_current_A_beg_ang = [[self.current_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_B_beg_ang = [[self.current_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_C_beg_ang = [[self.current_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_current_A_end_ang = [[self.current_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_B_end_ang = [[self.current_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_current_C_end_ang = [[self.current_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_voltage_A_beg_ang = [[self.voltage_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_B_beg_ang = [[self.voltage_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_C_beg_ang = [[self.voltage_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
+#
+        #data_voltage_A_end_ang = [[self.voltage_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_B_end_ang = [[self.voltage_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
+        #data_voltage_C_end_ang = [[self.voltage_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
 
-        data_current_A_beg_ang = [[self.current_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_B_beg_ang = [[self.current_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_C_beg_ang = [[self.current_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
 
-        data_current_A_end_ang = [[self.current_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_B_end_ang = [[self.current_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_current_C_end_ang = [[self.current_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-
-        data_voltage_A_beg_ang = [[self.voltage_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_B_beg_ang = [[self.voltage_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_C_beg_ang = [[self.voltage_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-
-        data_voltage_A_end_ang = [[self.voltage_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_B_end_ang = [[self.voltage_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        data_voltage_C_end_ang = [[self.voltage_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-
-
-        # Сборка данных в один список
-        self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
-                                          np.array(data_current_B_beg),
-                                          np.array(data_current_C_beg)), axis = 1)
-        self.data_current_end = np.concatenate((np.array(data_current_A_end),
-                                          np.array(data_current_B_end),
-                                          np.array(data_current_C_end)), axis = 1)
-        self.data_voltage_beg = np.concatenate((np.array(data_voltage_A_beg),
-                                          np.array(data_voltage_B_beg),
-                                          np.array(data_voltage_C_beg)), axis = 1)
-        self.data_voltage_end = np.concatenate((np.array(data_voltage_A_end),
-                                          np.array(data_voltage_B_end),
-                                          np.array(data_voltage_C_end)), axis = 1)
-        self.data_current_beg_ang = np.concatenate((np.array(data_current_A_beg_ang),
-                                               np.array(data_current_B_beg_ang),
-                                               np.array(data_current_C_beg_ang)), axis = 1)
-        self.data_current_end_ang = np.concatenate((np.array(data_current_A_end_ang),
-                                               np.array(data_current_B_end_ang),
-                                               np.array(data_current_C_end_ang)), axis = 1)
-        self.data_voltage_beg_ang = np.concatenate((np.array(data_voltage_A_beg_ang),
-                                               np.array(data_voltage_B_beg_ang),
-                                               np.array(data_voltage_C_beg_ang)), axis = 1)
-        self.data_voltage_end_ang = np.concatenate((np.array(data_voltage_A_end_ang),
-                                               np.array(data_voltage_B_end_ang),
-                                               np.array(data_voltage_C_end_ang)), axis = 1)
+        ## Сборка данных в один список
+        #self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
+        #                                  np.array(data_current_B_beg),
+        #                                  np.array(data_current_C_beg)), axis = 1)
+        #self.data_current_end = np.concatenate((np.array(data_current_A_end),
+        #                                  np.array(data_current_B_end),
+        #                                  np.array(data_current_C_end)), axis = 1)
+        #self.data_voltage_beg = np.concatenate((np.array(data_voltage_A_beg),
+        #                                  np.array(data_voltage_B_beg),
+        #                                  np.array(data_voltage_C_beg)), axis = 1)
+        #self.data_voltage_end = np.concatenate((np.array(data_voltage_A_end),
+        #                                  np.array(data_voltage_B_end),
+        #                                  np.array(data_voltage_C_end)), axis = 1)
+        #self.data_current_beg_ang = np.concatenate((np.array(data_current_A_beg_ang),
+        #                                       np.array(data_current_B_beg_ang),
+        #                                       np.array(data_current_C_beg_ang)), axis = 1)
+        #self.data_current_end_ang = np.concatenate((np.array(data_current_A_end_ang),
+        #                                       np.array(data_current_B_end_ang),
+        #                                       np.array(data_current_C_end_ang)), axis = 1)
+        #self.data_voltage_beg_ang = np.concatenate((np.array(data_voltage_A_beg_ang),
+        #                                       np.array(data_voltage_B_beg_ang),
+        #                                       np.array(data_voltage_C_beg_ang)), axis = 1)
+        #self.data_voltage_end_ang = np.concatenate((np.array(data_voltage_A_end_ang),
+        #                                       np.array(data_voltage_B_end_ang),
+        #                                       np.array(data_voltage_C_end_ang)), axis = 1)
+        #
         return self
     
     def _aimData(self):

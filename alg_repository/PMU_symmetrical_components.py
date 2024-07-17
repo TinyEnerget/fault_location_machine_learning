@@ -142,12 +142,12 @@ class PMU_symmetrical_components:
             self.positive_seq[exp] = pd.DataFrame(positive_seq_tmp)
             self.positive_seq_angle[exp] = pd.DataFrame(positive_seq_angle_tmp)
         
-            dict_seq = {
-                'zero_seq': self.zero_seq,
-                'zero_seq_angle': self.zero_seq_angle,
-                'negative_seq': self.negative_seq,
-                'negative_seq_angle': self.negative_seq_angle,
-                'positive_seq': self.positive_seq,
-                'positive_seq_angle': self.positive_seq_angle
-            }
+        dict_seq = {
+            'zero_seq': self.zero_seq,
+            'zero_seq_angle': self.zero_seq_angle,
+            'negative_seq': self.negative_seq,
+            'negative_seq_angle': self.negative_seq_angle,
+            'positive_seq': self.positive_seq,
+            'positive_seq_angle': self.positive_seq_angle
+        }
         return dict_seq
