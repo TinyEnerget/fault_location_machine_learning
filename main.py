@@ -1,4 +1,3 @@
-from flask import config
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
@@ -11,17 +10,6 @@ import datetime
 import os
 
 class LearnProcess:
-    """
-    The `LearnProcess` class is responsible for loading, preprocessing, and training time series classification models. It provides methods to:
-    - Load data from CSV files located in the 'CSV file rep' directory
-    - Preprocess the loaded data by extracting and concatenating relevant features
-    - Configure the parameters for a time series classification model
-    - Train a single or multiple experiments using the configured model
-    - Save the trained model and relevant metadata to a file
-    The class has several attributes that store the preprocessed data, such as `data_current_beg`, `data_current_end`, `data_voltage_beg`, `data_voltage_end`, `data_current_beg_ang`, `data_current_end_ang`, `data_voltage_beg_ang`, and `data_voltage_end_ang`.
-    The `fit()` method is the main entry point for training a time series classification model. It takes an optional `exp` parameter to specify the experiment type, and an optional `timenow` parameter to provide the current timestamp. If `exp` and `timenow` are not provided, the method will use the `exp_type` attribute of the `LearnProcess` instance.
-    The `FullExpProcess()` method runs the full experiment process, which includes preprocessing the data, getting the current timestamp, and iterating through the `exp_library` list to train a model for each experiment type.
-    """
     def __init__(
             self
             ):
@@ -67,35 +55,6 @@ class LearnProcess:
         self.voltage_B_angle_end = pd.DataFrame()
         self.voltage_C_angle_end =pd.DataFrame()        
 
-        #self.exp_library = [
-        #    'current_A_begin',
-        #    'current_A_end',
-        #    'voltage_A_begin',
-        #    'voltage_A_end',
-        #    'current_A_angle_begin',
-        #    'current_A_angle_end',
-        #    'voltage_A_angle_begin',
-        #    'voltage_A_angle_end',
-#
-        #    'current_B_begin',
-        #    'current_B_end',
-        #    'voltage_B_begin',
-        #    'voltage_B_end',
-        #    'current_B_angle_begin',
-        #    'current_B_angle_end',
-        #    'voltage_B_angle_begin',
-        #    'voltage_B_angle_end',
-#
-        #    'current_C_begin',
-        #    'current_C_end',
-        #    'voltage_C_begin',
-        #    'voltage_C_end',
-        #    'current_C_angle_begin',
-        #    'current_C_angle_end',
-        #    'voltage_C_angle_begin',
-        #    'voltage_C_angle_end'
-        #]
-
         self.measurement_types = {
                 'C': ('current_A', 'current_B', 'current_C'),
                 'V': ('voltage_A', 'voltage_B', 'voltage_C'),
@@ -110,6 +69,38 @@ class LearnProcess:
                 'U angle': ('voltage_A_angle', 'voltage_B_angle', 'voltage_C_angle')
                 }
 
+        self.symmetrical_components = {
+            'current_seq_begin': (
+                'current_A_begin',
+                'current_B_begin',
+                'current_C_begin',
+                'current_A_angle_begin',
+                'current_B_angle_begin',
+                'current_C_angle_begin'),
+            'current_seq_end': (
+                'current_A_end',
+                'current_B_end',
+                'current_C_end',
+                'current_A_angle_end',
+                'current_B_angle_end',
+                'current_C_angle_end'),
+            'voltage_seq_begin': (
+                'voltage_A_begin',
+                'voltage_B_begin',
+                'voltage_C_begin',
+                'voltage_A_angle_begin',
+                'voltage_B_angle_begin',
+                'voltage_C_angle_begin'),
+            'voltage_seq_end': (
+                'voltage_A_end',
+                'voltage_B_end',
+                'voltage_C_end',
+                'voltage_A_angle_end',
+                'voltage_B_angle_end',
+                'voltage_C_angle_end')
+        }
+            
+
         self.fit_library = {
             'forest': tscf,
             'hydra': hydrc
@@ -122,7 +113,7 @@ class LearnProcess:
 
     def _fileclassifier(self,
                         file_path: str,
-                        file_names: list
+                        file_names: list[str]
                         ):
         """
         Classifies the files in the specified directory and assigns the data to the corresponding
@@ -203,56 +194,63 @@ class LearnProcess:
     
     def _symmetrical_components(self):
         """
-        Calculates the symmetrical components of the current and voltage signals.
+        Calculates the symmetrical components for the given current and voltage measurements.
         
-        This method uses the `pmu_sc` function to calculate the positive, negative, and zero sequence components of the current and voltage signals for the beginning and end of each experiment.
+        This method iterates through the keys in the `symmetrical_components` dictionary and calculates the symmetrical components for each set of measurements. The symmetrical components are calculated using the `pmu_sc` function, which takes the current and voltage measurements as input and returns the symmetrical component vectors.
         
-        The calculated sequence components are stored in the following attributes of the `LearnProcess` instance:
-        - `current_seq_begin`: The sequence components of the current signals at the beginning of each experiment.
-        - `current_seq_end`: The sequence components of the current signals at the end of each experiment.
-        - `voltage_seq_begin`: The sequence components of the voltage signals at the beginning of each experiment.
-        - `voltage_seq_end`: The sequence components of the voltage signals at the end of each experiment.
+        The calculated symmetrical components are then assigned to the corresponding attributes of the `LearnProcess` instance.
         
         Returns:
-            LearnProcess: The updated `LearnProcess` instance with the calculated sequence components.
+            LearnProcess: The updated `LearnProcess` instance with the calculated symmetrical components.
         """
-        self.current_seq_begin = pmu_sc(
-            self.current_A_begin,
-            self.current_B_begin,
-            self.current_C_begin,
-            self.current_A_angle_begin,
-            self.current_B_angle_begin,
-            self.current_C_angle_begin
-        ).vectors_calculation()
-        self.current_seq_end = pmu_sc(
-            self.current_A_end,
-            self.current_B_end,
-            self.current_C_end,
-            self.current_A_angle_end,
-            self.current_B_angle_end,
-            self.current_C_angle_end
-        ).vectors_calculation()
-        self.voltage_seq_begin = pmu_sc(
-            self.voltage_A_begin,
-            self.voltage_B_begin,
-            self.voltage_C_begin,
-            self.voltage_A_angle_begin,
-            self.voltage_B_angle_begin,
-            self.voltage_C_angle_begin
-        ).vectors_calculation()
-        self.voltage_seq_end = pmu_sc(
-            self.voltage_A_end,
-            self.voltage_B_end,
-            self.voltage_C_end,
-            self.voltage_A_angle_end,
-            self.voltage_B_angle_end,
-            self.voltage_C_angle_end
-        ).vectors_calculation()
+        for name in self.symmetrical_components.keys():
+            setattr(self, name, pmu_sc(
+                    getattr(self, self.symmetrical_components[name][0]),
+                    getattr(self, self.symmetrical_components[name][1]),
+                    getattr(self, self.symmetrical_components[name][2]),
+                    getattr(self, self.symmetrical_components[name][3]),
+                    getattr(self, self.symmetrical_components[name][4]),
+                    getattr(self, self.symmetrical_components[name][5])
+                    ).vectors_calculation())
+            print('Completed ', name, '\n')
+
+        sym_com_names = [
+            'current_zero_seq_begin',
+            'current_zero_seq_angle_begin',
+            'current_negative_seq_begin',
+            'current_negative_seq_angle_begin',
+            'current_positive_seq_begin',
+            'current_positive_seq_angle_begin',
+            'voltage_zero_seq_begin',
+            'voltage_zero_seq_angle_begin',
+            'voltage_negative_seq_begin',
+            'voltage_negative_seq_angle_begin',
+            'voltage_positive_seq_begin',
+            'voltage_positive_seq_angle_begin',
+            'current_zero_seq_end',
+            'current_zero_seq_angle_end',
+            'current_negative_seq_end',
+            'current_negative_seq_angle_end',
+            'current_positive_seq_end',
+            'current_positive_seq_angle_end',
+            'voltage_zero_seq_end',
+            'voltage_zero_seq_angle_end',
+            'voltage_negative_seq_end',
+            'voltage_negative_seq_angle_end',
+            'voltage_positive_seq_end',
+            'voltage_positive_seq_angle_end'
+        ]
+
+        for name in sym_com_names:
+            word_list = name.split('_')
+            seq_name = word_list[1]+'_'+word_list[2] if 'angle' not in word_list else word_list[1]+'_'+word_list[2]+'_'+word_list[3]
+            setattr(self, name, getattr(self, word_list[0] + '_' + word_list[2] +
+                                        '_' + word_list[-1])[seq_name])
 
         return self
 
     #def _preprocessing(self):
-    #    """
+    #    ''"
     #    Preprocesses the data for the time series classification model.
     #    This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment.
     #    It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables.
