@@ -87,15 +87,15 @@ class TimeSeriesClassifierForest:
         config = self.config
 
         model = TimeSeriesForestClassifier(
-            base_estimator=config['base_estimator'][0],
-            n_estimators=config['n_estimators'][0],
-            n_intervals=config['n_intervals'][0],
-            min_interval_length=config['min_interval_length'][0],
-            max_interval_length=config['max_interval_length'][0],
-            time_limit_in_minutes=config['time_limit_in_minutes'][0],
-            contract_max_n_estimators=config['contract_max_n_estimators'][0],
-            random_state=config['random_state'][0],
-            n_jobs=config['n_jobs'][0],
+            base_estimator=config['base_estimator'],
+            n_estimators=config['n_estimators'],
+            n_intervals=config['n_intervals'],
+            min_interval_length=config['min_interval_length'],
+            max_interval_length=config['max_interval_length'],
+            time_limit_in_minutes=config['time_limit_in_minutes'],
+            contract_max_n_estimators=config['contract_max_n_estimators'],
+            random_state=config['random_state'],
+            n_jobs=config['n_jobs'],
             parallel_backend= config['parallel_backend']
         )
         model.fit(X_train, Y_train)

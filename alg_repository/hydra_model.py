@@ -90,10 +90,10 @@ class HydraCNNClassifier:
         config = self.config
 
         model = HydraClassifier(
-            n_kernels = config['n_kernels'][0],
-            n_groups = config['n_groups'][0],
-            random_state=config['random_state'][0],
-            n_jobs=config['n_jobs'][0]
+            n_kernels = config['n_kernels'],
+            n_groups = config['n_groups'],
+            random_state=config['random_state'],
+            n_jobs=config['n_jobs']
         )
         model.fit(X_train, Y_train)
         self.model = model
