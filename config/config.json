@@ -1,5 +1,9 @@
-{
-    "ml_model_type": "forest",
+{   
+    "exp_name": "full_exp",
+
+    "ml_model_type": [
+        "forest",
+        "hydra"],
 
     "feature": [
         "current_A_begin",
@@ -53,20 +57,23 @@
     ],
     
     "config_ml": {
-        "base_estimator": null,
+        "base_estimator": "null",
         "n_estimators": 20,
         "n_intervals": "sqrt",
         "min_interval_length": 3,
         "max_interval_length": "infinate",
-        "time_limit_in_minutes": null,
+        "time_limit_in_minutes": "null",
         "contract_max_n_estimators": 50,
-        "random_state": null,
+        "random_state": "null",
         "n_jobs": 5,
         "parallel_backend": "loky",
         "n_groups": 4,
         "n_kernels": 2
    },
 
-   "experiment_files_path": "CSV PMU 100fps"
+   "experiment_files_path": "CSV PMU 100fps",
+
+   "aim_methods_path": "aim methods\\"
+
 
 }

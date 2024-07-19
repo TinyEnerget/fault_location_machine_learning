@@ -28,13 +28,19 @@ class LearnProcess:
         """
                 
         
-        config = json.load(open('config//config.json'))
+        self.model_config = json.load(open('config//config.json'))
 
-        self.exp_list = config['feature']
+        self.exp_list = self.model_config['feature']
 
-        self.fit_type = config['ml_model_type']
+        self.fit_types = self.model_config['ml_model_type']
 
-        self.exp_file_path = config['experiment_files_path']
+        self.exp_file_path = self.model_config['experiment_files_path']
+
+        self.config = self.model_config['config_ml']
+
+        self.aim_path = self.model_config['aim_methods_path']
+
+        self.exp_name = self.model_config['exp_name']
 
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
@@ -118,13 +124,17 @@ class LearnProcess:
             'hydra': hydrc
         }
         
-        self.best_method = self._aimData()
+        self = self._configuration()
+
+        self = self._aimData()
 
         self = self._load_data()
 
         self = self._symmetrical_components_names()
 
         self = self._symmetrical_components()
+
+        self = self._preprocessing()
 
 
 
@@ -275,7 +285,7 @@ class LearnProcess:
             self: The current object with the preprocessed data stored in the `X` attribute.
         """
         # Сборка групп данных
-        exp_names = ['exp ' + str(indx + 1) for indx in range(3000)]
+        exp_names = ['exp ' + str(indx + 1) for indx in range(4608)]
 
         meases = self.exp_list
         count = 0
@@ -289,12 +299,11 @@ class LearnProcess:
                         [
                             data,
                             self.concat_data(getattr(self, f'{meas}'), exp_names)
-
                         ],
                         axis=1
                     )
                     count += 1
-        setattr(self, 'X', data)
+        self.X = data
         
         return self
     
@@ -304,11 +313,14 @@ class LearnProcess:
         Returns:
             numpy.ndarray: The best method, transposed.
         """     
-        file_path = 'method train result\\'
-        file_names = os.listdir(file_path)
-        best_method = di(';',file_path + file_names[0]).main_process()
-        best_method = np.array(best_method).transpose().flatten()
-        return best_method
+        file_names = os.listdir(self.aim_path)
+        if len(file_names) == 0:
+            raise FileNotFoundError('No files in the directory')
+        else:
+            for file in file_names:
+                setattr(self, file.split('.')[0],
+                    np.array(di(';',self.aim_path + file_names[0]).main_process()).transpose().flatten())
+        return self
 
     def _configuration(self):
         """
@@ -331,34 +343,39 @@ class LearnProcess:
         Returns:
             dict: A dictionary containing the configured parameters for the time series classification model.
         """
-        
-        n_kernels = 2,
-        n_groups = 4,        
-        base_estimator=None,
-        n_estimators=20,
-        n_intervals="sqrt",
-        min_interval_length=3,
-        max_interval_length=np.inf,
-        time_limit_in_minutes=None,
-        contract_max_n_estimators=50,
-        random_state=None,
-        n_jobs=5,
-        parallel_backend= 'loky'
-        self.config = {
-             'base_estimator': base_estimator,
-             'n_estimators': n_estimators,
-             'n_intervals': n_intervals,
-             'min_interval_length': min_interval_length,
-             'max_interval_length': max_interval_length,
-             'time_limit_in_minutes': time_limit_in_minutes,
-             'contract_max_n_estimators': contract_max_n_estimators,
-             'random_state': random_state,
-             'n_jobs': n_jobs,
-             'parallel_backend': parallel_backend,
-             'n_groups': n_groups,
-             'n_kernels': n_kernels
-        }
-        return self.config
+        for key in self.config.keys():
+            if type(self.config[key]) == str:
+                if self.config[key] == 'null':
+                    self.config[key] = None
+                elif self.config[key] == 'infinate':
+                    self.config[key] = np.inf
+        #n_kernels = 2,
+        #n_groups = 4,        
+        #base_estimator=None,
+        #n_estimators=20,
+        #n_intervals="sqrt",
+        #min_interval_length=3,
+        #max_interval_length=np.inf,
+        #time_limit_in_minutes=None,
+        #contract_max_n_estimators=50,
+        #random_state=None,
+        #n_jobs=5,
+        #parallel_backend= 'loky'
+        #self.config = {
+        #     'base_estimator': base_estimator,
+        #     'n_estimators': n_estimators,
+        #     'n_intervals': n_intervals,
+        #     'min_interval_length': min_interval_length,
+        #     'max_interval_length': max_interval_length,
+        #     'time_limit_in_minutes': time_limit_in_minutes,
+        #     'contract_max_n_estimators': contract_max_n_estimators,
+        #     'random_state': random_state,
+        #     'n_jobs': n_jobs,
+        #     'parallel_backend': parallel_backend,
+        #     'n_groups': n_groups,
+        #     'n_kernels': n_kernels
+        #}
+        return self
     
     def _timenow(self):
         """
@@ -366,8 +383,7 @@ class LearnProcess:
         
         Returns:
             str: The current date and time as a string.
-        """
-                
+        """      
         return datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
 
     def _save_model(self, model, exp_name, acc, report, timenow):
@@ -393,7 +409,8 @@ class LearnProcess:
                 'exp_name': exp_name,
                 'Date': timenow,
                 'config': self.config,
-                'model': 'time series forest classification',
+                'model': self.fit_types,
+                'feature': self.exp_list,
                 'accuracy': acc,
                 'report': report,
                 'model address': adress + filename + '.pkl'
@@ -404,10 +421,10 @@ class LearnProcess:
 
             with open(adress + filename + '.json', 'w') as f:
                 json.dump(model_description, f, indent=4)
-                joblib.dump(model, adress + filename + '.pkl')
+                joblib.dump(model, model_description['model address'])
         return 
 
-    def fit(self, exp = None, timenow = None):
+    def fit(self):
         """
         Trains a time series classification model and saves the trained model along with relevant metadata.
         
@@ -418,37 +435,17 @@ class LearnProcess:
         Returns:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
-                
-        if exp is not None and timenow is not None and self.exp_type is None:
-            print('Training the model: ', exp)
-            config = LearnProcess._configuration(self)
-            X = LearnProcess._trainData_multi_exp(self, exp)
-            Y = LearnProcess._aimData(self)
-            model, acc, report = self.fit_library[self.fit_type](config, X, Y).main()
-            LearnProcess._save_model(self, model, exp, acc, report, timenow)
-        else:
-            print('Training the model: ', self.exp_type)
-            config = LearnProcess._configuration(self)
-            X = LearnProcess._trainData_one_exp(self)
-            Y = LearnProcess._aimData(self)
-            model, acc, report = self.fit_library[self.fit_type](config, X, Y).main()
-            timenow = LearnProcess._timenow(self)
-            LearnProcess._save_model(self, model, self.exp_type, acc, report, timenow)
-        return model, acc, report
-    
-    def FullExpProcess(self):
-        """
-        Runs the full experiment process for the LearnProcess instance.
-        
-        This method preprocesses the data, gets the current timestamp, and then iterates through the `exp_library` list, calling the `fit()` method for each experiment.
-        
-        Returns:
-            str: A message indicating the outcome of the full experiment process.
-        """
-                
-        self = LearnProcess._preprocessing(self)
-        timenow = LearnProcess._timenow(self)
-        for exp in self.exp_library:
-            LearnProcess.fit(self, exp, timenow)
-        return 'Могло быть лучше, но так получилось'
+        timenow = self._timenow()
+        for aim_name in os.listdir(self.aim_path):
+            for fit_type in self.fit_types:
+                print('Training the model: ', fit_type)
+                config = self.config
+                X = self.X
+                Y = getattr(
+                    self,
+                    aim_name.split('.')[0]
+                )
+                model, acc, report = self.fit_library[fit_type](config, X, Y).main()
+                self._save_model(model, self.exp_name, acc, report, timenow)
+        return "Fin"
 
