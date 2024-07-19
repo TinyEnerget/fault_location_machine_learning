@@ -13,8 +13,21 @@ class LearnProcess:
     def __init__(
             self
             ):
+        """
+        Initializes the LearnProcess class with configuration settings and data structures to store the loaded data.
         
-
+        The __init__ method sets up the following attributes:
+        - exp_list: A list of feature names from the configuration file.
+        - fit_type: The machine learning model type from the configuration file.
+        - exp_file_path: The file path for the experiment files from the configuration file.
+        - Various DataFrame attributes to store the loaded current, voltage, and angle data.
+        - Dictionaries to map measurement types to attribute names.
+        - A dictionary to map machine learning model types to their corresponding classes.
+        - Calls the _aimData and _load_data methods to initialize the data.
+        - Calls the _symmetrical_components method to calculate the symmetrical components of the loaded data.
+        """
+                
+        
         config = json.load(open('config//config.json'))
 
         self.exp_list = config['feature']
@@ -98,8 +111,7 @@ class LearnProcess:
                 'voltage_A_angle_end',
                 'voltage_B_angle_end',
                 'voltage_C_angle_end')
-        }
-            
+        }  
 
         self.fit_library = {
             'forest': tscf,
@@ -109,6 +121,11 @@ class LearnProcess:
         self.best_method = self._aimData()
 
         self = self._load_data()
+
+        self = self._symmetrical_components_names()
+
+        self = self._symmetrical_components()
+
 
 
     def _fileclassifier(self,
@@ -192,6 +209,14 @@ class LearnProcess:
 
         return self
     
+    def _symmetrical_components_names(self):
+
+        self.symmetrical_components_names = []
+        for idx in range(len(self.exp_list)):
+            if 'seq' in self.exp_list[idx].split('_'):
+                self.symmetrical_components_names.append(self.exp_list[idx])
+
+        return self
     def _symmetrical_components(self):
         """
         Calculates the symmetrical components for the given current and voltage measurements.
@@ -214,34 +239,7 @@ class LearnProcess:
                     ).vectors_calculation())
             print('Completed ', name, '\n')
 
-        sym_com_names = [
-            'current_zero_seq_begin',
-            'current_zero_seq_angle_begin',
-            'current_negative_seq_begin',
-            'current_negative_seq_angle_begin',
-            'current_positive_seq_begin',
-            'current_positive_seq_angle_begin',
-            'voltage_zero_seq_begin',
-            'voltage_zero_seq_angle_begin',
-            'voltage_negative_seq_begin',
-            'voltage_negative_seq_angle_begin',
-            'voltage_positive_seq_begin',
-            'voltage_positive_seq_angle_begin',
-            'current_zero_seq_end',
-            'current_zero_seq_angle_end',
-            'current_negative_seq_end',
-            'current_negative_seq_angle_end',
-            'current_positive_seq_end',
-            'current_positive_seq_angle_end',
-            'voltage_zero_seq_end',
-            'voltage_zero_seq_angle_end',
-            'voltage_negative_seq_end',
-            'voltage_negative_seq_angle_end',
-            'voltage_positive_seq_end',
-            'voltage_positive_seq_angle_end'
-        ]
-
-        for name in sym_com_names:
+        for name in self.symmetrical_components_names:
             word_list = name.split('_')
             seq_name = word_list[1]+'_'+word_list[2] if 'angle' not in word_list else word_list[1]+'_'+word_list[2]+'_'+word_list[3]
             setattr(self, name, getattr(self, word_list[0] + '_' + word_list[2] +
@@ -249,205 +247,55 @@ class LearnProcess:
 
         return self
 
-    #def _preprocessing(self):
-    #    ''"
-    #    Preprocesses the data for the time series classification model.
-    #    This method initializes temporary variables to store the current and voltage data for the beginning and end of each experiment.
-    #    It then iterates through the experiments, extracting the relevant data and storing it in the temporary variables.
-    #    Finally, it concatenates the data into larger arrays and assigns them to the corresponding attributes of the LearnProcess instance.
-    #    Returns:
-    #        LearnProcess: The updated LearnProcess instance with the preprocessed data.
-    #    """ 
-    #    def concat_data(
-    #            df: pd.DataFrame, 
-    #            exp_names: list[str]) -> np.ndarray:
-    #        """
-    #        Concatenates the data for each experiment into a single array.
-    #        This method iterates through the experiments and concatenates the data for each experiment into a single array.
-    #        Args:
-    #            df: The data for each experiment.
-    #            exp_names: The names of the experiments.
-    #        Returns:
-    #            np.ndarray: The concatenated data for all experiments.
-    #        """
-    #        data_list = []
-    #        for exp in exp_names:
-    #            tmp = df[exp].reset_index(drop=True).values
-    #            data_list.append(tmp)
-    #        return np.ndarray(data_list)        
-    #    
-    #    # Сборка групп данных
-    #    exp_names = [f'exp {i+1}' for i in range(len(self.best_method))]
-    #    
-    #    sets = [
-    #        'current_begin',
-    #        'current_end',
-    #        'voltage_begin',
-    #        'voltage_end'
-    #        'current_angle_begin',
-    #        'current_angle_end',
-    #        'voltage_angle_begin',
-    #        'voltage_angle_end'
-    #    ]
-#
-    #    meases = [
-    #        'current_A_begin',
-    #        'current_A_end',
-    #        'voltage_A_begin',
-    #        'voltage_A_end',
-    #        'current_A_angle_begin',
-    #        'current_A_angle_end',
-    #        'voltage_A_angle_begin',
-    #        'voltage_A_angle_end',
-#
-    #        'current_B_begin',
-    #        'current_B_end',
-    #        'voltage_B_begin',
-    #        'voltage_B_end',
-    #        'current_B_angle_begin',
-    #        'current_B_angle_end',
-    #        'voltage_B_angle_begin',
-    #        'voltage_B_angle_end',
-#
-    #        'current_C_begin',
-    #        'current_C_end',
-    #        'voltage_C_begin',
-    #        'voltage_C_end',
-    #        'current_C_angle_begin',
-    #        'current_C_angle_end',
-    #        'voltage_C_angle_begin',
-    #        'voltage_C_angle_end'
-    #    ]
-    #    #self.exp_library
-    #    for set in sets:
-    #        for meas in meases:
-    #            data = np.concatenate(
-    #                [
-    #                    concat_data(getattr(self, f'{meas}'), exp_names),
-    #                ],
-    #                axis=1
-    #            )
-    #        setattr(self, f'data_{set}', data)
-#
-    #    return self
-
-
-        ## Сборка данных в один список
-        #self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
-        #                                  np.array(data_current_B_beg),
-        #                                  np.array(data_current_C_beg)), axis = 1)
-        #self.data_current_end = np.concatenate((np.array(data_current_A_end),
-        #                                  np.array(data_current_B_end),
-        #                                  np.array(data_current_C_end)), axis = 1)
-        #self.data_voltage_beg = np.concatenate((np.array(data_voltage_A_beg),
-        #                                  np.array(data_voltage_B_beg),
-        #                                  np.array(data_voltage_C_beg)), axis = 1)
-        #self.data_voltage_end = np.concatenate((np.array(data_voltage_A_end),
-        #                                  np.array(data_voltage_B_end),
-        #                                  np.array(data_voltage_C_end)), axis = 1)
-        #self.data_current_beg_ang = np.concatenate((np.array(data_current_A_beg_ang),
-        #                                       np.array(data_current_B_beg_ang),
-        #                                       np.array(data_current_C_beg_ang)), axis = 1)
-        #self.data_current_end_ang = np.concatenate((np.array(data_current_A_end_ang),
-        #                                       np.array(data_current_B_end_ang),
-        #                                       np.array(data_current_C_end_ang)), axis = 1)
-        #self.data_voltage_beg_ang = np.concatenate((np.array(data_voltage_A_beg_ang),
-        #                                       np.array(data_voltage_B_beg_ang),
-        #                                       np.array(data_voltage_C_beg_ang)), axis = 1)
-        #self.data_voltage_end_ang = np.concatenate((np.array(data_voltage_A_end_ang),
-        #                                       np.array(data_voltage_B_end_ang),
-        #                                       np.array(data_voltage_C_end_ang)), axis = 1)
-        #return self
-
+    def concat_data(
+            self,
+             df: pd.DataFrame, 
+             exp_names: list[str]) -> np.ndarray:
+         """
+         Concatenates the data for each experiment into a single array.
+         This method iterates through the experiments and concatenates the data for each experiment into a single array.
+         Args:
+             df: The data for each experiment.
+             exp_names: The names of the experiments.
+         Returns:
+             np.ndarray: The concatenated data for all experiments.
+         """
+         return np.array([[df[exp].reset_index(drop=True).values] for exp in exp_names]) 
+    
     def _preprocessing(self):  
-
-
-        def concat_data(
-                df: pd.DataFrame, 
-                exp_names: list[str]) -> np.ndarray:
-            """
-            Concatenates the data for each experiment into a single array.
-            This method iterates through the experiments and concatenates the data for each experiment into a single array.
-            Args:
-                df: The data for each experiment.
-                exp_names: The names of the experiments.
-            Returns:
-                np.ndarray: The concatenated data for all experiments.
-            """
-            return np.array([[df[exp].reset_index(drop=True).values] for exp in exp_names])   
+        """
+        Preprocesses the data by concatenating the data for each experiment into a single array.
         
+        This method iterates through the experiments and concatenates the data for each experiment into a single array, which is then stored in the `X` attribute of the object.
+        
+        Args:
+            None
+        
+        Returns:
+            self: The current object with the preprocessed data stored in the `X` attribute.
+        """
         # Сборка групп данных
         exp_names = ['exp ' + str(indx + 1) for indx in range(3000)]
 
         meases = self.exp_list
-
+        count = 0
+        
         for meas in meases:
-                data = np.concatenate(
-                    [
-                        concat_data(getattr(self, f'{meas}'), exp_names),
-                    ],
-                    axis=1
-                )
+                if count == 0:
+                    data = self.concat_data(getattr(self, f'{meas}'), exp_names)
+                    count += 1
+                else:
+                    data = np.concatenate(
+                        [
+                            data,
+                            self.concat_data(getattr(self, f'{meas}'), exp_names)
 
-        #data_current_A_beg = concat_data(exp_names)
-        #data_current_B_beg = [[self.current_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_C_beg = [[self.current_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_current_A_end = [[self.current_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_B_end = [[self.current_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_C_end = [[self.current_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_voltage_A_beg = [[self.voltage_A_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_B_beg = [[self.voltage_B_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_C_beg = [[self.voltage_C_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_voltage_A_end = [[self.voltage_A_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_B_end = [[self.voltage_B_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_C_end = [[self.voltage_C_end[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_current_A_beg_ang = [[self.current_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_B_beg_ang = [[self.current_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_C_beg_ang = [[self.current_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_current_A_end_ang = [[self.current_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_B_end_ang = [[self.current_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_current_C_end_ang = [[self.current_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_voltage_A_beg_ang = [[self.voltage_A_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_B_beg_ang = [[self.voltage_B_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_C_beg_ang = [[self.voltage_C_angle_begin[exp].reset_index(drop=True).values] for exp in exp_names]
-#
-        #data_voltage_A_end_ang = [[self.voltage_A_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_B_end_ang = [[self.voltage_B_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-        #data_voltage_C_end_ang = [[self.voltage_C_angle_end[exp].reset_index(drop=True).values] for exp in exp_names]
-
-
-        ## Сборка данных в один список
-        #self.data_current_beg = np.concatenate((np.array(data_current_A_beg),
-        #                                  np.array(data_current_B_beg),
-        #                                  np.array(data_current_C_beg)), axis = 1)
-        #self.data_current_end = np.concatenate((np.array(data_current_A_end),
-        #                                  np.array(data_current_B_end),
-        #                                  np.array(data_current_C_end)), axis = 1)
-        #self.data_voltage_beg = np.concatenate((np.array(data_voltage_A_beg),
-        #                                  np.array(data_voltage_B_beg),
-        #                                  np.array(data_voltage_C_beg)), axis = 1)
-        #self.data_voltage_end = np.concatenate((np.array(data_voltage_A_end),
-        #                                  np.array(data_voltage_B_end),
-        #                                  np.array(data_voltage_C_end)), axis = 1)
-        #self.data_current_beg_ang = np.concatenate((np.array(data_current_A_beg_ang),
-        #                                       np.array(data_current_B_beg_ang),
-        #                                       np.array(data_current_C_beg_ang)), axis = 1)
-        #self.data_current_end_ang = np.concatenate((np.array(data_current_A_end_ang),
-        #                                       np.array(data_current_B_end_ang),
-        #                                       np.array(data_current_C_end_ang)), axis = 1)
-        #self.data_voltage_beg_ang = np.concatenate((np.array(data_voltage_A_beg_ang),
-        #                                       np.array(data_voltage_B_beg_ang),
-        #                                       np.array(data_voltage_C_beg_ang)), axis = 1)
-        #self.data_voltage_end_ang = np.concatenate((np.array(data_voltage_A_end_ang),
-        #                                       np.array(data_voltage_B_end_ang),
-        #                                       np.array(data_voltage_C_end_ang)), axis = 1)
-        #
+                        ],
+                        axis=1
+                    )
+                    count += 1
+        setattr(self, 'X', data)
+        
         return self
     
     def _aimData(self):
@@ -461,64 +309,6 @@ class LearnProcess:
         best_method = di(';',file_path + file_names[0]).main_process()
         best_method = np.array(best_method).transpose().flatten()
         return best_method
-
-    def _trainData_one_exp(self):
-        """
-        Trains the data for a single experiment.
-        Returns:
-            numpy.ndarray: The training data for the specified experiment type.
-        """         
-        self = LearnProcess._preprocessing(self)
-   
-        variable_name = self.exp_type
-        if variable_name == 'current begin':
-            self.X = self.data_current_beg
-        elif variable_name == 'current end':
-            self.X = self.data_current_end
-        elif variable_name == 'voltage begin':
-            self.X = self.data_voltage_beg
-        elif variable_name == 'voltage end':
-            self.X = self.data_voltage_end
-        elif variable_name == 'current begin angle':
-            self.X = self.data_current_beg_ang
-        elif variable_name == 'current end angle':
-            self.X = self.data_current_end_ang
-        elif variable_name == 'voltage begin angle':
-            self.X = self.data_voltage_beg_ang
-        elif variable_name == 'voltage end angle':
-            self.X = self.data_voltage_end_ang
-
-        return self.X
-
-    def _trainData_multi_exp(self, exp = None):
-        """
-        Trains the data for multiple experiments.
-        Args:
-            exp (str, optional): The experiment type to train the data for. Can be one of 'current begin', 
-            'current end', 'voltage begin', 'voltage end', 'current begin angle', 'current end angle',
-            'voltage begin angle', or 'voltage end angle'.
-        Returns:
-            numpy.ndarray: The training data for the specified experiment type.
-        """
-
-        variable_name = exp
-        if variable_name == 'current begin':
-            self.X = self.data_current_beg
-        elif variable_name == 'current end':
-            self.X = self.data_current_end
-        elif variable_name == 'voltage begin':
-            self.X = self.data_voltage_beg
-        elif variable_name == 'voltage end':
-            self.X = self.data_voltage_end
-        elif variable_name == 'current begin angle':
-            self.X = self.data_current_beg_ang
-        elif variable_name == 'current end angle':
-            self.X = self.data_current_end_ang
-        elif variable_name == 'voltage begin angle':
-            self.X = self.data_voltage_beg_ang
-        elif variable_name == 'voltage end angle':
-            self.X = self.data_voltage_end_ang
-        return self.X
 
     def _configuration(self):
         """
