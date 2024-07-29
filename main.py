@@ -386,7 +386,7 @@ class LearnProcess:
         """      
         return datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
 
-    def _save_model(self, model, exp_name, acc, report, timenow):
+    def _save_model(self, model, exp_name, acc, report, timenow, fit_type):
         """
         Saves a trained time series classification model to a file, along with relevant metadata about the model and training process.
         
@@ -413,7 +413,7 @@ class LearnProcess:
                 'feature': self.exp_list,
                 'accuracy': acc,
                 'report': report,
-                'model address': adress + filename + '.pkl'
+                'model address': adress + filename + '_' + fit_type + '.pkl'
             }
 
             if not os.path.exists(adress):
@@ -436,16 +436,17 @@ class LearnProcess:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
         timenow = self._timenow()
+        config = self.config
+        X = self.X
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
                 print('Training the model: ', fit_type)
-                config = self.config
-                X = self.X
+                print('Aim: ', aim_name.split('.')[0])
                 Y = getattr(
                     self,
                     aim_name.split('.')[0]
                 )
                 model, acc, report = self.fit_library[fit_type](config, X, Y).main()
-                self._save_model(model, self.exp_name, acc, report, timenow)
+                self._save_model(model, self.exp_name, acc, report, timenow, fit_type)
         return "Fin"
 
