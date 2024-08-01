@@ -123,6 +123,27 @@ class LearnProcess:
             'forest': tscf,
             'hydra': hydrc
         }
+
+        self.fit_type_config = {
+            'forest': [
+                'base_estimator',
+                'n_estimators',
+                'n_intervals',
+                'min_interval_length',
+                'max_interval_length',
+                'time_limit_in_minutes',
+                'contract_max_n_estimators',
+                'random_state',
+                'n_jobs',
+                'parallel_backend'
+            ],
+            'hydra': [
+                'n_kernels',
+                'n_groups',
+                'n_jobs',
+                'random_state'
+            ]
+        }
         
         self = self._configuration()
 
@@ -349,6 +370,7 @@ class LearnProcess:
                     self.config[key] = None
                 elif self.config[key] == 'infinate':
                     self.config[key] = np.inf
+
         #n_kernels = 2,
         #n_groups = 4,        
         #base_estimator=None,
@@ -376,6 +398,16 @@ class LearnProcess:
         #     'n_kernels': n_kernels
         #}
         return self
+    
+    def TypeConfigParam(self, fit_type):
+        config = {}
+        if fit_type == 'forest':
+            for key in self.fit_type_config[fit_type]:
+                config[key] = self.config[key]
+        elif fit_type == 'hydra':
+            for key in self.fit_type_config[fit_type]:
+                config[key] = self.config[key]
+        return config
     
     def _timenow(self):
         """
@@ -436,7 +468,7 @@ class LearnProcess:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
         timenow = self._timenow()
-        config = self.config
+        config = self.TypeConfigParam(self.config)
         X = self.X
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
