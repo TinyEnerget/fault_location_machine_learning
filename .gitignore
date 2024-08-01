@@ -3157,3 +3157,7 @@ CSV PMU 100fps/PMU_UC_begin_mag.csv
 CSV PMU 100fps/PMU_UC_end_angle.csv
 CSV PMU 100fps/PMU_UC_end_mag.csv
 CSV file rep/Data_Phase_C_A_end.csv
+tmp file/best_method.csv
+tmp file/BestMethodOneSide.csv
+tmp file/sc_position.CSV
+tmp file/train_data_preproc.ipynb

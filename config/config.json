@@ -61,7 +61,7 @@
         "n_estimators": 20,
         "n_intervals": "sqrt",
         "min_interval_length": 3,
-        "max_interval_length": "infinate",
+        "max_interval_length": 999,
         "time_limit_in_minutes": "null",
         "contract_max_n_estimators": 50,
         "random_state": "null",

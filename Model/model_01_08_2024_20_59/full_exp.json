@@ -1,0 +1,143 @@
+{
+    "exp_name": "full_exp",
+    "Date": "01_08_2024_20_59",
+    "config": {
+        "base_estimator": null,
+        "n_estimators": 20,
+        "n_intervals": "sqrt",
+        "min_interval_length": 3,
+        "max_interval_length": "infinate",
+        "time_limit_in_minutes": null,
+        "contract_max_n_estimators": 50,
+        "random_state": null,
+        "n_jobs": 5,
+        "parallel_backend": "loky",
+        "n_groups": 4,
+        "n_kernels": 2
+    },
+    "model": [
+        "forest",
+        "hydra"
+    ],
+    "feature": [
+        "current_A_begin",
+        "current_A_end",
+        "current_B_begin",
+        "current_B_end",
+        "current_C_begin",
+        "current_C_end",
+        "voltage_A_begin",
+        "voltage_A_end",
+        "voltage_B_begin",
+        "voltage_B_end",
+        "voltage_C_begin",
+        "voltage_C_end",
+        "current_A_angle_begin",
+        "current_A_angle_end",
+        "current_B_angle_begin",
+        "current_B_angle_end",
+        "current_C_angle_begin",
+        "current_C_angle_end",
+        "voltage_A_angle_begin",
+        "voltage_A_angle_end",
+        "voltage_B_angle_begin",
+        "voltage_B_angle_end",
+        "voltage_C_angle_begin",
+        "voltage_C_angle_end",
+        "current_zero_seq_begin",
+        "current_zero_seq_angle_begin",
+        "current_negative_seq_begin",
+        "current_negative_seq_angle_begin",
+        "current_positive_seq_begin",
+        "current_positive_seq_angle_begin",
+        "voltage_zero_seq_begin",
+        "voltage_zero_seq_angle_begin",
+        "voltage_negative_seq_begin",
+        "voltage_negative_seq_angle_begin",
+        "voltage_positive_seq_begin",
+        "voltage_positive_seq_angle_begin",
+        "current_zero_seq_end",
+        "current_zero_seq_angle_end",
+        "current_negative_seq_end",
+        "current_negative_seq_angle_end",
+        "current_positive_seq_end",
+        "current_positive_seq_angle_end",
+        "voltage_zero_seq_end",
+        "voltage_zero_seq_angle_end",
+        "voltage_negative_seq_end",
+        "voltage_negative_seq_angle_end",
+        "voltage_positive_seq_end",
+        "voltage_positive_seq_angle_end"
+    ],
+    "accuracy": 0.21149674620390455,
+    "report": {
+        "1": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 123.0
+        },
+        "3": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 144.0
+        },
+        "4": {
+            "precision": 0.21149674620390455,
+            "recall": 1.0,
+            "f1-score": 0.34914950760966873,
+            "support": 195.0
+        },
+        "6": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 108.0
+        },
+        "7": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 145.0
+        },
+        "8": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 72.0
+        },
+        "9": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 40.0
+        },
+        "10": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 51.0
+        },
+        "11": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 44.0
+        },
+        "accuracy": 0.21149674620390455,
+        "macro avg": {
+            "precision": 0.023499638467100504,
+            "recall": 0.1111111111111111,
+            "f1-score": 0.03879438973440764,
+            "support": 922.0
+        },
+        "weighted avg": {
+            "precision": 0.04473087365483882,
+            "recall": 0.21149674620390455,
+            "f1-score": 0.07384398479814035,
+            "support": 922.0
+        }
+    },
+    "model address": "Model\\model_01_08_2024_20_59\\full_exp_hydra.pkl"
+}

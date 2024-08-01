@@ -451,7 +451,7 @@ class LearnProcess:
             if not os.path.exists(adress):
                 os.makedirs(adress)
 
-            with open(adress + filename + '.json', 'w') as f:
+            with open(adress + filename + '_' + fit_type + '.json', 'w') as f:
                 json.dump(model_description, f, indent=4)
                 joblib.dump(model, model_description['model address'])
         return 
@@ -468,7 +468,7 @@ class LearnProcess:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
         timenow = self._timenow()
-        config = self.TypeConfigParam(self.config)
+        #config = self.TypeConfigParam(self.config, fit_type)
         X = self.X
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
@@ -478,7 +478,10 @@ class LearnProcess:
                     self,
                     aim_name.split('.')[0]
                 )
-                model, acc, report = self.fit_library[fit_type](config, X, Y).main()
-                self._save_model(model, self.exp_name, acc, report, timenow, fit_type)
+                model, acc, report = self.fit_library[
+                    fit_type](self.TypeConfigParam(fit_type), X, Y).main()
+                self._save_model(model, self.exp_name, 
+                                 acc, report, timenow, fit_type)
+                del model, acc, report
         return "Fin"
 
