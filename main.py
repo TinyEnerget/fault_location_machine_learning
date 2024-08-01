@@ -370,33 +370,6 @@ class LearnProcess:
                     self.config[key] = None
                 elif self.config[key] == 'infinate':
                     self.config[key] = np.inf
-
-        #n_kernels = 2,
-        #n_groups = 4,        
-        #base_estimator=None,
-        #n_estimators=20,
-        #n_intervals="sqrt",
-        #min_interval_length=3,
-        #max_interval_length=np.inf,
-        #time_limit_in_minutes=None,
-        #contract_max_n_estimators=50,
-        #random_state=None,
-        #n_jobs=5,
-        #parallel_backend= 'loky'
-        #self.config = {
-        #     'base_estimator': base_estimator,
-        #     'n_estimators': n_estimators,
-        #     'n_intervals': n_intervals,
-        #     'min_interval_length': min_interval_length,
-        #     'max_interval_length': max_interval_length,
-        #     'time_limit_in_minutes': time_limit_in_minutes,
-        #     'contract_max_n_estimators': contract_max_n_estimators,
-        #     'random_state': random_state,
-        #     'n_jobs': n_jobs,
-        #     'parallel_backend': parallel_backend,
-        #     'n_groups': n_groups,
-        #     'n_kernels': n_kernels
-        #}
         return self
     
     def TypeConfigParam(self, fit_type):
@@ -468,7 +441,6 @@ class LearnProcess:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
         timenow = self._timenow()
-        #config = self.TypeConfigParam(self.config, fit_type)
         X = self.X
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
