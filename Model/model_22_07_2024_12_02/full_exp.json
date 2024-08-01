@@ -1,0 +1,143 @@
+{
+    "exp_name": "full_exp",
+    "Date": "22_07_2024_12_02",
+    "config": {
+        "base_estimator": null,
+        "n_estimators": 20,
+        "n_intervals": "sqrt",
+        "min_interval_length": 3,
+        "max_interval_length": "infinate",
+        "time_limit_in_minutes": null,
+        "contract_max_n_estimators": 50,
+        "random_state": null,
+        "n_jobs": 5,
+        "parallel_backend": "loky",
+        "n_groups": 4,
+        "n_kernels": 2
+    },
+    "model": [
+        "forest",
+        "hydra"
+    ],
+    "feature": [
+        "current_A_begin",
+        "current_A_end",
+        "current_B_begin",
+        "current_B_end",
+        "current_C_begin",
+        "current_C_end",
+        "voltage_A_begin",
+        "voltage_A_end",
+        "voltage_B_begin",
+        "voltage_B_end",
+        "voltage_C_begin",
+        "voltage_C_end",
+        "current_A_angle_begin",
+        "current_A_angle_end",
+        "current_B_angle_begin",
+        "current_B_angle_end",
+        "current_C_angle_begin",
+        "current_C_angle_end",
+        "voltage_A_angle_begin",
+        "voltage_A_angle_end",
+        "voltage_B_angle_begin",
+        "voltage_B_angle_end",
+        "voltage_C_angle_begin",
+        "voltage_C_angle_end",
+        "current_zero_seq_begin",
+        "current_zero_seq_angle_begin",
+        "current_negative_seq_begin",
+        "current_negative_seq_angle_begin",
+        "current_positive_seq_begin",
+        "current_positive_seq_angle_begin",
+        "voltage_zero_seq_begin",
+        "voltage_zero_seq_angle_begin",
+        "voltage_negative_seq_begin",
+        "voltage_negative_seq_angle_begin",
+        "voltage_positive_seq_begin",
+        "voltage_positive_seq_angle_begin",
+        "current_zero_seq_end",
+        "current_zero_seq_angle_end",
+        "current_negative_seq_end",
+        "current_negative_seq_angle_end",
+        "current_positive_seq_end",
+        "current_positive_seq_angle_end",
+        "voltage_zero_seq_end",
+        "voltage_zero_seq_angle_end",
+        "voltage_negative_seq_end",
+        "voltage_negative_seq_angle_end",
+        "voltage_positive_seq_end",
+        "voltage_positive_seq_angle_end"
+    ],
+    "accuracy": 0.14533622559652928,
+    "report": {
+        "1": {
+            "precision": 0.16387337057728119,
+            "recall": 0.7154471544715447,
+            "f1-score": 0.26666666666666666,
+            "support": 123.0
+        },
+        "3": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 144.0
+        },
+        "4": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 195.0
+        },
+        "6": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 108.0
+        },
+        "7": {
+            "precision": 0.11948051948051948,
+            "recall": 0.31724137931034485,
+            "f1-score": 0.17358490566037735,
+            "support": 145.0
+        },
+        "8": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 72.0
+        },
+        "9": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 40.0
+        },
+        "10": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 51.0
+        },
+        "11": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 44.0
+        },
+        "accuracy": 0.14533622559652928,
+        "macro avg": {
+            "precision": 0.03148376556197785,
+            "recall": 0.11474317042020996,
+            "f1-score": 0.04891684136967156,
+            "support": 922.0
+        },
+        "weighted avg": {
+            "precision": 0.0406519521753589,
+            "recall": 0.14533622559652928,
+            "f1-score": 0.06287398190971227,
+            "support": 922.0
+        }
+    },
+    "model address": "Model\\model_22_07_2024_12_02\\full_exp.pkl"
+}
