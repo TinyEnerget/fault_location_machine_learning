@@ -1,53 +1,7 @@
-{   
-    "exp_name": "full_exp",
-
-    "ml_model_type": [
-        "forest",
-        "hydra"],
-
+{
+    "exp_name": "rr",
+    "ml_model_type": "forest",
     "feature": [
-        "current_A_begin",
-        "current_A_end",
-        "current_B_begin",
-        "current_B_end",
-        "current_C_begin",
-        "current_C_end",
-        "voltage_A_begin",
-        "voltage_A_end",
-        "voltage_B_begin",
-        "voltage_B_end",
-        "voltage_C_begin",
-        "voltage_C_end",
-        "current_A_angle_begin",
-        "current_A_angle_end",
-        "current_B_angle_begin",
-        "current_B_angle_end",
-        "current_C_angle_begin",
-        "current_C_angle_end",
-        "voltage_A_angle_begin",
-        "voltage_A_angle_end",
-        "voltage_B_angle_begin",
-        "voltage_B_angle_end",
-        "voltage_C_angle_begin",
-        "voltage_C_angle_end",
-        "current_zero_seq_begin",
-        "current_zero_seq_angle_begin",
-        "current_negative_seq_begin",
-        "current_negative_seq_angle_begin",
-        "current_positive_seq_begin",
-        "current_positive_seq_angle_begin",
-        "voltage_zero_seq_begin",
-        "voltage_zero_seq_angle_begin",
-        "voltage_negative_seq_begin",
-        "voltage_negative_seq_angle_begin",
-        "voltage_positive_seq_begin",
-        "voltage_positive_seq_angle_begin",
-        "current_zero_seq_end",
-        "current_zero_seq_angle_end",
-        "current_negative_seq_end",
-        "current_negative_seq_angle_end",
-        "current_positive_seq_end",
-        "current_positive_seq_angle_end",
         "voltage_zero_seq_end",
         "voltage_zero_seq_angle_end",
         "voltage_negative_seq_end",
@@ -55,25 +9,18 @@
         "voltage_positive_seq_end",
         "voltage_positive_seq_angle_end"
     ],
-    
     "config_ml": {
-        "base_estimator": "null",
-        "n_estimators": 20,
-        "n_intervals": "sqrt",
-        "min_interval_length": 3,
-        "max_interval_length": 999,
-        "time_limit_in_minutes": "null",
-        "contract_max_n_estimators": 50,
-        "random_state": "null",
-        "n_jobs": 5,
-        "parallel_backend": "loky",
-        "n_groups": 4,
-        "n_kernels": 2
-   },
-
-   "experiment_files_path": "CSV PMU 100fps",
-
-   "aim_methods_path": "aim methods\\"
-
-
+        "base_estimator": "rt",
+        "n_estimators": "null data",
+        "n_intervals": "rt",
+        "min_interval_length": "null data",
+        "max_interval_length": "null data",
+        "time_limit_in_minutes": "rt",
+        "contract_max_n_estimators": "null data",
+        "random_state": "rt",
+        "n_jobs": "null data",
+        "parallel_backend": "rt"
+    },
+    "experiment_files_path": "CSV PMU 100fps",
+    "aim_methods_path": "aim methods\\"
 }

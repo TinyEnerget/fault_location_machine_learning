@@ -119,7 +119,8 @@ class TimeSeriesClassifierForest:
 
         Y_pred = model.predict(X_test)
         Y_pred_proba = model.predict_proba(X_test)
-
+        print("Y_pred:", Y_pred)
+        pd.DataFrame(Y_pred_proba).to_csv('Y_pred_proba.csv')
         accuracy = accuracy_score(Y_test, Y_pred)
         report = classification_report(Y_test, Y_pred, output_dict=True, zero_division=0 )
         print("Accuracy:", accuracy)
@@ -144,6 +145,9 @@ class TimeSeriesClassifierForest:
                            label="Predicted Labels", color="red", s=30)
         axes[0, 0].set_xlabel("Sample Index")
         axes[0, 0].set_ylabel("Class Label")
+        axes[0, 0].set_yticks(np.unique(Y_pred))
+        axes[0, 0].set_yticklabels(np.unique(Y_pred))
+        axes[0, 0].set_ylim(min(np.unique(Y_test)) - 0.5, max(np.unique(Y_test)) + 0.5)
         axes[0, 0].set_title("True vs Predicted Labels")
         axes[0, 0].legend()
 
@@ -151,7 +155,7 @@ class TimeSeriesClassifierForest:
         precision = precision_score(Y_test, Y_pred, average=None)
         recall = recall_score(Y_test, Y_pred, average=None)
         f1 = f1_score(Y_test, Y_pred, average=None)
-        metrics_df = pd.DataFrame({"Precision": precision, "Recall": recall, "F1-Score": f1}, index=np.unique(Y_test))
+        metrics_df = pd.DataFrame({"Precision": precision, "Recall": recall, "F1-Score": f1}, index=np.unique(Y_pred))
         sns.heatmap(metrics_df, annot=True, cmap="YlGnBu", ax=axes[0, 1])
         axes[0, 1].set_title("Performance Metrics")
 
