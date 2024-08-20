@@ -6,15 +6,12 @@ import os
 import sys
 import json
 
-from sqlalchemy import column
-from sympy import true
-
 class GUI(ctk.CTk):
     def __init__(self):
         super().__init__()
         
         self.title("Time series types fault location's methods classifier")
-        self.geometry("1000x800")
+        self.geometry(f"{1000}x{800}")
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -39,15 +36,15 @@ class GUI(ctk.CTk):
                                           anchor="w", command=self.start_button_event)
         self.start_button.grid(row=1, column=0, sticky="ew")
 
-        self.train_model_button = ctk.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Train ML model",
+        self.config_model_button = ctk.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Configure ML model",
                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                   anchor="w", command=self.train_model_button_event)
-        self.train_model_button.grid(row=2, column=0, sticky="ew")
+                                                   anchor="w", command=self.config_model_button_event)
+        self.config_model_button.grid(row=2, column=0, sticky="ew")
 
-        self.frame_2_button = ctk.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Frame 2",
+        self.train_ml_button = ctk.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Train ML model",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      anchor="w", command=self.frame_2_button_event)
-        self.frame_2_button.grid(row=3, column=0, sticky="ew")
+                                                      anchor="w", command=self.train_ml_button_event)
+        self.train_ml_button.grid(row=3, column=0, sticky="ew")
 
         self.frame_3_button = ctk.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Frame 3",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
@@ -58,39 +55,39 @@ class GUI(ctk.CTk):
                                                                 command=self.change_appearance_mode_event)
         self.appearance_mode_menu.grid(row=6, column=0, padx=20, pady=20, sticky="s")
 
-        # create train model frame
-        self.train_model_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", width=600, height=800)
-        self.train_model_frame.grid_rowconfigure((5,10), weight=1)
-        self.train_model_frame.grid_columnconfigure((6,7,9,10), weight=1)
-        self.train_model_frame_label_intro = ctk.CTkLabel(self.train_model_frame, text="Configure your model", 
+        # create configure model frame
+        self.config_model_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", width=600, height=800)
+        self.config_model_frame.grid_rowconfigure((5,10), weight=1)
+        self.config_model_frame.grid_columnconfigure((6,7,9,10), weight=1)
+        self.config_model_frame_label_intro = ctk.CTkLabel(self.config_model_frame, text="Configure your model", 
                                                          font=ctk.CTkFont(size=20, weight="bold"))
-        self.train_model_frame_label_intro.grid(row=0, column=4, columnspan=2, padx=20, pady=20, sticky="nsew")
+        self.config_model_frame_label_intro.grid(row=0, column=4, columnspan=2, padx=0, pady=20, sticky="nsew")
 
-        self.train_model_frame_label_intro_1 = ctk.CTkLabel(self.train_model_frame, 
+        self.config_model_frame_label_intro_1 = ctk.CTkLabel(self.config_model_frame, 
                                                             text="In this section you will be able to configure your model", 
                                                             compound= "center")
-        self.train_model_frame_label_intro_1.grid(row=1, column=4,
+        self.config_model_frame_label_intro_1.grid(row=1, column=4,
                                                             columnspan=2)
         
-        self.model_parameters_frame_switch_base_parameters = ctk.CTkSwitch(self.train_model_frame,
+        self.model_parameters_frame_switch_base_parameters = ctk.CTkSwitch(self.config_model_frame,
                                                                               text="Use base parameters",
                                                                               command=self.use_base_parameters_event)
         self.model_parameters_frame_switch_base_parameters.grid(row=2, column=4, padx=0, pady=20)
 
-        self.model_parameters_frame_label = ctk.CTkLabel(self.train_model_frame, 
+        self.model_parameters_frame_label = ctk.CTkLabel(self.config_model_frame, 
                                                               text="Model configuration", 
                                                               font=ctk.CTkFont(size=15, 
                                                                                weight='normal'))
         self.model_parameters_frame_label.grid(row=3, column=4, padx=0, pady=0, sticky="nsew")
         
-        self.model_parameters_frame_label_1 = ctk.CTkLabel(self.train_model_frame, 
+        self.model_parameters_frame_label_1 = ctk.CTkLabel(self.config_model_frame, 
                                                               text="Feature configuration", 
                                                               font=ctk.CTkFont(size=15, 
                                                                                weight='normal'))
         self.model_parameters_frame_label_1.grid(row=3, column=5, padx=0, pady=0, sticky="nsew")
 
         # config model заполнение данными
-        self.model_parameters_frame = ctk.CTkScrollableFrame(master = self.train_model_frame,
+        self.model_parameters_frame = ctk.CTkScrollableFrame(master = self.config_model_frame,
                                                    corner_radius=5, width=400, height=500,
                                                    fg_color="gray25")
         self.model_parameters_frame.grid(row=4, column=4, padx=(20, 0), pady=(20, 0), sticky="nsew")
@@ -138,6 +135,7 @@ class GUI(ctk.CTk):
             row_idx += 1
         
         last_row = row_idx + 8
+
         # hydra parameters entery
         self.model_parameters_frame_fit_type_lables_hydra = ctk.CTkLabel(self.model_parameters_frame,
                                                                           text="Hydra parameters",
@@ -154,14 +152,14 @@ class GUI(ctk.CTk):
 
         last_row = row_idx + last_row
 
-        self.train_model_frame_save_config_button = ctk.CTkButton(self.train_model_frame,
+        self.config_model_frame_save_config_button = ctk.CTkButton(self.config_model_frame,
                                                                   text="Save config",
                                                                   command=self.save_config_event)
-        self.train_model_frame_save_config_button.grid(row=5, column=4, padx=0, pady=10)
+        self.config_model_frame_save_config_button.grid(row=5, column=4, padx=0, pady=10)
 
 
-        self.features_config_frame = ctk.CTkScrollableFrame(master = self.train_model_frame,
-                                                            corner_radius=5, width=300, height=500,
+        self.features_config_frame = ctk.CTkScrollableFrame(master = self.config_model_frame,
+                                                            corner_radius=5, width=320, height=500,
                                                             fg_color="gray25")
         self.features_config_frame.grid(row=4, column=5, padx=(20, 0), pady=(20, 0), sticky="nsew")
         self.features_config_frame.grid_rowconfigure(20, weight=1)
@@ -170,15 +168,31 @@ class GUI(ctk.CTk):
         self.features_config_frame_features_chk_boxes = []
         row_idx = 0
         for feature in self.features_list:
-            chk_box = ctk.CTkCheckBox(self.features_config_frame, text=feature, width=200)
-            chk_box.grid(row=row_idx, column=0, padx=0, pady=10)
+            chk_box = ctk.CTkCheckBox(self.features_config_frame, text=feature, width=300 )
+            chk_box.grid(row=row_idx, column=0, padx=10, pady=10)
             chk_box.select()
             self.features_config_frame_features_chk_boxes.append(chk_box)
             row_idx += 1
 
 
-        # create second frame
-        self.second_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        # create train ml model frame
+        self.train_ml_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", width=600, height=800)
+        self.train_ml_frame.grid_rowconfigure(20, weight=1)
+        self.train_ml_frame.grid_columnconfigure(2, weight=1)
+
+        self.train_ml_frame_label_intro = ctk.CTkLabel(self.train_ml_frame, text="Train your model", 
+                                                         font=ctk.CTkFont(size=20, weight="bold"))
+        self.train_ml_frame_label_intro.grid(row=0, column=0, columnspan=3, padx=0, pady=20, sticky="nsew")
+
+        self.train_ml_frame_label_intro_1 = ctk.CTkLabel(self.train_ml_frame, 
+                                                            text="In this section you will be able to train your model", 
+                                                            compound= "center")
+        self.train_ml_frame_label_intro_1.grid(row=1, column=0, columnspan=3)
+
+        self.train_ml_frame_textBox = ctk.CTkTextbox(self.train_ml_frame, height=400, width=400)
+        self.train_ml_frame_textBox.grid(row=2, column=0, columnspan=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.load_json_to_treeview()
+
 
         # create third frame
         self.third_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
@@ -193,19 +207,60 @@ class GUI(ctk.CTk):
 
         self.select_frame_by_name("start")
 
+
+    def load_json_to_treeview(self):
+        with open("config\\config.json", "r") as file:
+            data = json.load(file)
+
+        style = ttk.Style()
+        style.configure("Treeview", 
+                background="gray75",
+                foreground="gray25",
+                fieldbackground="gray75",
+                rowheight=25,
+                font=ctk.CTkFont(size=15, weight='normal'))
+                
+        style.map('Treeview', background=[('selected', 'gray25')])
+        tree = ttk.Treeview(self.train_ml_frame, style="Treeview")
+        tree["columns"] = ("Value")
+        tree.column("#0", width=400, minwidth=400)
+        tree.column("Value", width=200, minwidth=200)
+        tree.heading("#0", text="Key")
+        tree.heading("Value", text="Value")
+
+        def insert_into_treeview(parent, key, value):
+            if isinstance(value, dict):
+                node = tree.insert(parent, "end", text=key, open=True)
+                for k, v in value.items():
+                    insert_into_treeview(node, k, v)
+            elif isinstance(value, list):
+                node = tree.insert(parent, "end", text=key, open=True)
+                for i, item in enumerate(value):
+                    insert_into_treeview(node, "", item)
+            else:
+                tree.insert(parent, "end", text=key, values=(value,))
+
+        for key, value in data.items():
+            insert_into_treeview("", key, value)
+
+        tree.grid(row=2, column=0, columnspan=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        
+
+
     def get_model_config(self) -> dict:
         """
         TO DO:
         - n_intervals: write additional parameters for this parameter in subscriptions of this parameters-
         """
-        base_config = json.load(open("config base\\config_base.json"))["config_ml"]
+        self.ml_config = json.load(open("config base\\config_base.json"))
+        self.base_config = self.ml_config["config_ml"]
         model_parameters_lib = {
             "fit type":{
                 "forest": "Time Series Forest Classifier",
                 "hydra": "Hydra Classifier"
                 },
             "model name": "Model name",
-            "base parameters": base_config,
+            "base parameters": self.base_config,
             "model parameters": {
                 "forest": {
                     "option menu": {
@@ -234,16 +289,16 @@ class GUI(ctk.CTk):
         return model_parameters_lib
     
     def get_features_config(self) -> dict:
-        features_config = json.load(open("config base\\config_base.json"))["feature"]
+        features_config = self.ml_config["feature"]
         return features_config
 
     def use_base_parameters_event(self):
         print(self.model_parameters_frame_switch_base_parameters.get())
         if self.model_parameters_frame_switch_base_parameters.get() == 1:
             self.model_parameters_frame.configure(fg_color="gray75")
-            self.model_parameters_frame_name_entry.configure(state="disabled", fg_color="gray75")
             self.model_parameters_frame_fit_type_switches[0].configure(fg_color="gray75", state="disabled")
             self.model_parameters_frame_fit_type_switches[1].configure(fg_color="gray75", state="disabled")
+            self.model_parameters_frame_base_estimator_option_menu.configure(fg_color="gray75", state="disabled")
             for idx in range(len(self.model_parameters_frame_forest_param_entries)):
                 self.model_parameters_frame_forest_param_entries[idx].configure(fg_color="gray75", state="disabled")
             for idx in range(len(self.model_parameters_frame_hydra_param_entries)):
@@ -251,9 +306,9 @@ class GUI(ctk.CTk):
             
         elif self.model_parameters_frame_switch_base_parameters.get() == 0:
             self.model_parameters_frame.configure(fg_color="gray25")
-            self.model_parameters_frame_name_entry.configure(state="normal", fg_color="gray25")
             self.model_parameters_frame_fit_type_switches[0].configure(fg_color="gray25", state="normal")
             self.model_parameters_frame_fit_type_switches[1].configure(fg_color="gray25", state="normal")
+            self.model_parameters_frame_base_estimator_option_menu.configure(fg_color="gray25", state="normal")
             for idx in range(len(self.model_parameters_frame_forest_param_entries)):
                 self.model_parameters_frame_forest_param_entries[idx].configure(fg_color="gray25", state="normal")
             for idx in range(len(self.model_parameters_frame_hydra_param_entries)):
@@ -278,7 +333,7 @@ class GUI(ctk.CTk):
             model_name = self.model_parameters_frame_name_entry.get()
 
             if self.model_parameters_frame_fit_type_switches[0].get() == 1:
-                fit_type = "forest"
+                fit_type = ["forest"]
                 config_ml = {
                     "base_estimator": self.validate_input(self.model_parameters_frame_forest_param_entries[0].get(), str),
                     "n_estimators": self.validate_input(self.model_parameters_frame_forest_param_entries[1].get(), int),
@@ -292,7 +347,7 @@ class GUI(ctk.CTk):
                     "parallel_backend": self.validate_input(self.model_parameters_frame_forest_param_entries[9].get(), str)
                     }
             elif self.model_parameters_frame_fit_type_switches[1].get() == 1:
-                fit_type = "hydra"
+                fit_type = ["hydra"]
                 config_ml = {
                     "n_kernels": self.validate_input(self.model_parameters_frame_hydra_param_entries[0].get(), str),
                     "n_groups": self.validate_input(self.model_parameters_frame_hydra_param_entries[1].get(), str),
@@ -315,6 +370,10 @@ class GUI(ctk.CTk):
                         "n_kernels": self.model_parameters_frame_hydra_param_entries[0].get(),
                         "n_groups": self.model_parameters_frame_hydra_param_entries[1].get(),
                     }
+            elif self.model_parameters_frame_switch_base_parameters.get() == 1:
+                fit_type = self.ml_config["ml_model_type"]
+                config_ml = self.base_config
+
             feature = []
             for idx in range(len(self.features_config_frame_features_chk_boxes)):
                 if self.features_config_frame_features_chk_boxes[idx].get() == 1:
@@ -324,7 +383,7 @@ class GUI(ctk.CTk):
             config = {
                 "exp_name": model_name,
 
-                "ml_model_type": [fit_type],
+                "ml_model_type": fit_type,
 
                 "feature": feature,
 
@@ -340,12 +399,13 @@ class GUI(ctk.CTk):
                 json.dump(config, f, indent=4)
         except:
             Warning("Error in saving config")
-    
+
+
     def select_frame_by_name(self, name):
         # set button color for selected button
         self.start_button.configure(fg_color=("gray75", "gray25") if name == "start" else "transparent")
-        self.train_model_button.configure(fg_color=("gray75", "gray25") if name == "train_model" else "transparent")
-        self.frame_2_button.configure(fg_color=("gray75", "gray25") if name == "frame_2" else "transparent")
+        self.config_model_button.configure(fg_color=("gray75", "gray25") if name == "config_model" else "transparent")
+        self.train_ml_button.configure(fg_color=("gray75", "gray25") if name == "train_ml" else "transparent")
         self.frame_3_button.configure(fg_color=("gray75", "gray25") if name == "frame_3" else "transparent")
 
         # show selected frame
@@ -353,14 +413,14 @@ class GUI(ctk.CTk):
             self.start_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.start_frame.grid_forget()
-        if name == "train_model":
-            self.train_model_frame.grid(row=0, column=1, sticky="nsew")
+        if name == "config_model":
+            self.config_model_frame.grid(row=0, column=1, sticky="nsew")
         else:
-            self.train_model_frame.grid_forget()
-        if name == "frame_2":
-            self.second_frame.grid(row=0, column=1, sticky="nsew")
+            self.config_model_frame.grid_forget()
+        if name == "train_ml":
+            self.train_ml_frame.grid(row=0, column=1, sticky="nsew")
         else:
-            self.second_frame.grid_forget()
+            self.train_ml_frame.grid_forget()
         if name == "frame_3":
             self.third_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -369,12 +429,11 @@ class GUI(ctk.CTk):
     def start_button_event(self):
         self.select_frame_by_name("start")
         
+    def config_model_button_event(self):
+        self.select_frame_by_name("config_model")
 
-    def train_model_button_event(self):
-        self.select_frame_by_name("train_model")
-
-    def frame_2_button_event(self):
-        self.select_frame_by_name("frame_2")
+    def train_ml_button_event(self):
+        self.select_frame_by_name("train_ml")
 
     def frame_3_button_event(self):
         self.select_frame_by_name("frame_3")

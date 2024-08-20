@@ -28,7 +28,7 @@ class LearnProcess:
         """
                 
         
-        self.model_config = json.load(open('config//config_base.json'))
+        self.model_config = json.load(open('config//config.json'))
 
         self.exp_list = self.model_config['feature']
 
