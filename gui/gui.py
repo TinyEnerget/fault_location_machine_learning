@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from turtle import width
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import os
@@ -187,10 +188,13 @@ class GUI(ctk.CTk):
         self.train_ml_frame_label_intro_1 = ctk.CTkLabel(self.train_ml_frame, 
                                                             text="In this section you will be able to train your model", 
                                                             compound= "center")
-        self.train_ml_frame_label_intro_1.grid(row=1, column=0, columnspan=3)
+        self.train_ml_frame_label_intro_1.grid(row=1, column=0, columnspan=3, pady=20, sticky="nsew")
 
-        self.train_ml_frame_textBox = ctk.CTkTextbox(self.train_ml_frame, height=400, width=400)
-        self.train_ml_frame_textBox.grid(row=2, column=0, columnspan=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.train_ml_frame_label_config_visual = ctk.CTkLabel(self.train_ml_frame, 
+                                                            text="Your model configuraition for training", 
+                                                            compound= "center")
+        self.train_ml_frame_label_config_visual.grid(row=2, column=0, columnspan=2)
+
         self.load_json_to_treeview()
 
 
@@ -218,34 +222,71 @@ class GUI(ctk.CTk):
                 foreground="gray25",
                 fieldbackground="gray75",
                 rowheight=25,
-                font=ctk.CTkFont(size=15, weight='normal'))
+                font=ctk.CTkFont(size=15, weight='normal'),
+                padding=5,
+                relief="flat",
+                borderwidth=2,
+                arrowcolor="black",
+                arrowsize=12,
+                selectbackground="gray40",
+                selectforeground="white",
+                indent=20)  
+               
+        style.configure("Treeview.Heading",
+                background="gray",
+                fieldbackground="gray75",
+                foreground="black",
+                relief="flat",
+                font=ctk.CTkFont(size=16, weight='bold'))
                 
         style.map('Treeview', background=[('selected', 'gray25')])
-        tree = ttk.Treeview(self.train_ml_frame, style="Treeview")
-        tree["columns"] = ("Value")
-        tree.column("#0", width=400, minwidth=400)
-        tree.column("Value", width=200, minwidth=200)
-        tree.heading("#0", text="Key")
-        tree.heading("Value", text="Value")
+        self.tree = ttk.Treeview(self.train_ml_frame, style="Treeview",height=20)
+        self.tree["columns"] = ("Value")
+        self.tree.column("#0", width=250, minwidth=200)
+        self.tree.column("Value", width=280, minwidth=200)
+        self.tree.heading("#0", text="Key")
+        self.tree.heading("Value", text="Value")
 
-        def insert_into_treeview(parent, key, value):
+        self.insert_data_into_treeview(data)
+
+        self.tree.grid(row=3, column=0, columnspan=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+
+        self.setup_file_watcher()
+    
+    def insert_data_into_treeview(self, data, parent=""):
+        for key, value in data.items():    
             if isinstance(value, dict):
-                node = tree.insert(parent, "end", text=key, open=True)
-                for k, v in value.items():
-                    insert_into_treeview(node, k, v)
+                node = self.tree.insert(parent, "end", text=key, open=True)
+                node = self.tree.insert(parent, "end", text=key, open=True)
+                self.insert_data_into_treeview(value, node)
             elif isinstance(value, list):
-                node = tree.insert(parent, "end", text=key, open=True)
+                node = self.tree.insert(parent, "end", text=key, open=True)
                 for i, item in enumerate(value):
-                    insert_into_treeview(node, "", item)
+                    self.insert_data_into_treeview({str(i): item}, node)
             else:
-                tree.insert(parent, "end", text=key, values=(value,))
+                self.tree.insert(parent, "end", text=key, values=(value,))
 
-        for key, value in data.items():
-            insert_into_treeview("", key, value)
+    def update_treeview(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
 
-        tree.grid(row=2, column=0, columnspan=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        
+        with open("config\\config.json", "r") as file:
+            data = json.load(file)
 
+        self.insert_data_into_treeview(data)
+    
+    def setup_file_watcher(self):
+        path = "config"
+        event_handler = ConfigFileHandler(self.update_treeview)
+        self.observer = Observer()
+        self.observer.schedule(event_handler, path, recursive=False)
+        self.observer.start()
+
+    def on_closing(self):
+        if hasattr(self, 'observer'):
+            self.observer.stop()
+            self.observer.join()
+        self.quit() 
 
     def get_model_config(self) -> dict:
         """
@@ -441,6 +482,25 @@ class GUI(ctk.CTk):
     def change_appearance_mode_event(self, new_appearance_mode):
         ctk.set_appearance_mode(new_appearance_mode)
     
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class ConfigFileHandler(FileSystemEventHandler):
+    def __init__(self, callback):
+        self.callback = callback
+
+    def on_modified(self, event):
+        if event.src_path.endswith("config.json"):
+            self.callback()
+
+    def on_created(self, event):
+        if event.src_path.endswith("config.json"):
+            self.callback()
+
+    def on_deleted(self, event):
+        if event.src_path.endswith("config.json"):
+            self.callback()
+
 if __name__ == "__main__":
     app = GUI()
     app.mainloop()
