@@ -4,16 +4,13 @@ import pandas as pd
 class PMU_relative_units:
         
     def __init__(self,
-                 magnitude_A: pd.DataFrame,
-                 magnitude_B: pd.DataFrame,
-                 magnitude_C: pd.DataFrame,
+                 magnitude: pd.DataFrame,
                  measurment_type: str
                  ):
                 
-        self.magnitude_A = magnitude_A
-        self.magnitude_B = magnitude_B
-        self.magnitude_C = magnitude_C
+        self.magnitude = magnitude
         self.measurment_type = measurment_type
+
         self.MeanNominalPhaseVoltages = [
             3.15,
             6.3,
@@ -27,47 +24,58 @@ class PMU_relative_units:
             515,
             750,
             1150
-        ] / np.sqrt(3)
+        ] / np.sqrt(3) * 10**3
 
     def measurment(self):
 
         if self.measurment_type == 'voltage':
-            return self.vectors_voltage_calculation()
+            return self.vectors_voltage_calculation(
+                self.magnitude
+            )
 
         elif self.measurment_type == 'current':
-            return self.vectors_current_calculation()
+            return self.vectors_current_calculation(
+                self.magnitude
+            )
 
         else:
             raise Exception('Measurement type not recognized')
 
-    def _vector_construction(self, exp, idx) -> np.ndarray:
-        """
-        Constructs a vector of complex phase values from the input magnitudes and angles.
-        
-        Args:
-            exp (char): The experiment index.
-            idx (int): The data index.
-        
-        Returns:
-            np.ndarray: A 3-element numpy array containing the complex phase vectors.
-        """
-                
-        phase_vectors = np.array([
-            self.magnitude_A[exp][idx],
-            self.magnitude_B[exp][idx],
-            self.magnitude_C[exp][idx]
-            ])
-        return phase_vectors
+    def vectors_voltage_calculation(self, 
+                             magnitude: pd.DataFrame):
+        keys = magnitude.columns
+        for key in keys:
+            SteadyStateMagnitude = self.SteadystateNormalCalculation(
+                magnitude, key
+            )
+            MeanNominalVoltage = self.MeanNominalVoltageCalculation(
+                SteadyStateMagnitude
+            )
+            magnitude[key] = magnitude[key] / MeanNominalVoltage
+        return magnitude
+    
+    def vectors_current_calculation(self, 
+                             magnitude: pd.DataFrame):
+        keys = magnitude.columns
+        for key in keys:
+            SteadyStateMagnitude = self.SteadystateNormalCalculation(
+                magnitude, key
+            )
+            magnitude[key] = magnitude[key] / SteadyStateMagnitude
+        return magnitude
 
-    def SteadystateNormalCalculation(self):
+    def SteadystateNormalCalculation(self,
+                                     magnitude: pd.DataFrame,
+                                     key: str):
+        
         idx = 0
         tmp_list = []
         idx_list = []
-        cur_norm = []
-        for item in dif_cur:
+        SteadyStateMagnitude = []
+        for item in magnitude.diff()[key]:
             if np.abs(np.round(item, decimals=0)) <= 0 and idx != 0:
                 tmp_list.append(idx)
-                cur_norm.append(tmp_cur[idx-1])
+                SteadyStateMagnitude.append(magnitude[key][idx-1])
                 idx_list.append(idx-1)
 
             if tmp_list != []:
@@ -75,14 +83,19 @@ class PMU_relative_units:
                     print(tmp_list)
                     break
             idx += 1
-        
+    
+        SteadyStateMagnitude = np.sqrt(np.mean(
+            np.square(
+                np.array(
+                    SteadyStateMagnitude
+                    ))))
 
-cur_norm = np.array(cur_norm)
+        return SteadyStateMagnitude
                                      
     def MeanNominalVoltageCalculation(self, 
-                                    SteadyStateNormal: np.ndarray) -> float:
+                                    SteadyStateMagnitude: float) -> float:
         for item in self.MeanNominalPhaseVoltages:
-            if SteadyStateNormal <= 1.2*item and SteadyStateNormal >= 0.8*item:
+            if SteadyStateMagnitude <= 1.2*item and SteadyStateMagnitude >= 0.8*item:
                 MeanNominalVoltage = item
                 break
         return MeanNominalVoltage
