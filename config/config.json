@@ -1,5 +1,5 @@
 {
-    "exp_name": "penis",
+    "exp_name": "test",
     "ml_model_type": [
         "forest",
         "hydra"

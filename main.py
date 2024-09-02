@@ -2,6 +2,8 @@ from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
 from alg_repository.PMU_symmetrical_components import PMU_symmetrical_components as pmu_sc
+from alg_repository.PMU_relative_unit import PMU_relative_units as pmu_ru
+
 import json
 import joblib
 import numpy as np
@@ -41,6 +43,8 @@ class LearnProcess:
         self.aim_path = self.model_config['aim_methods_path']
 
         self.exp_name = self.model_config['exp_name']
+
+        self.use_relaive_units = 0
 
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
