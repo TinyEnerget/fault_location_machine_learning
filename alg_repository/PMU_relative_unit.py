@@ -1,103 +1,56 @@
 import numpy as np
 import pandas as pd
+from numba import njit
+from concurrent.futures import ThreadPoolExecutor
 
 class PMU_relative_units:
-        
-    def __init__(self,
-                 magnitude: pd.DataFrame,
-                 measurment_type: str
-                 ):
-                
+    def __init__(self, magnitude: pd.DataFrame, measurement_type: str):
         self.magnitude = magnitude
-        self.measurment_type = measurment_type
+        self.measurement_type = measurement_type
+        self.MeanNominalPhaseVoltages = np.array(
+            [3.15, 6.3, 10.5, 37, 115, 154, 230, 340, 400, 515, 750, 1150]
+            ) / np.sqrt(3) * 10**3
 
-        self.MeanNominalPhaseVoltages = [
-            3.15,
-            6.3,
-            10.5,
-            37,
-            115,
-            154,
-            230,
-            340,
-            400,
-            515,
-            750,
-            1150
-        ] / np.sqrt(3) * 10**3
-
-    def measurment(self):
-
-        if self.measurment_type == 'voltage':
-            return self.vectors_voltage_calculation(
-                self.magnitude
-            )
-
-        elif self.measurment_type == 'current':
-            return self.vectors_current_calculation(
-                self.magnitude
-            )
-
+    def measurement(self):
+        if self.measurement_type == 'voltage':
+            return self.vectors_voltage_calculation(self.magnitude)
+        elif self.measurement_type == 'current':
+            return self.vectors_current_calculation(self.magnitude)
         else:
             raise Exception('Measurement type not recognized')
 
-    def vectors_voltage_calculation(self, 
-                             magnitude: pd.DataFrame):
-        keys = magnitude.columns
-        for key in keys:
-            SteadyStateMagnitude = self.SteadystateNormalCalculation(
-                magnitude, key
-            )
-            MeanNominalVoltage = self.MeanNominalVoltageCalculation(
-                SteadyStateMagnitude
-            )
-            magnitude[key] = magnitude[key] / MeanNominalVoltage
-        return magnitude
-    
-    def vectors_current_calculation(self, 
-                             magnitude: pd.DataFrame):
-        keys = magnitude.columns
-        for key in keys:
-            SteadyStateMagnitude = self.SteadystateNormalCalculation(
-                magnitude, key
-            )
-            magnitude[key] = magnitude[key] / SteadyStateMagnitude
-        return magnitude
+    def vectors_voltage_calculation(self, magnitude: pd.DataFrame):
+        steady_state_magnitudes = self.parallel_steady_state_calculation(magnitude)
+        return magnitude.div(steady_state_magnitudes)
 
-    def SteadystateNormalCalculation(self,
-                                     magnitude: pd.DataFrame,
-                                     key: str):
-        
-        idx = 0
-        tmp_list = []
-        idx_list = []
-        SteadyStateMagnitude = []
-        for item in magnitude.diff()[key]:
-            if np.abs(np.round(item, decimals=0)) <= 0 and idx != 0:
-                tmp_list.append(idx)
-                SteadyStateMagnitude.append(magnitude[key][idx-1])
-                idx_list.append(idx-1)
+    def vectors_current_calculation(self, magnitude: pd.DataFrame):
+        steady_state_magnitudes = self.parallel_steady_state_calculation(magnitude)
+        return magnitude.div(steady_state_magnitudes)
 
-            if tmp_list != []:
-                if np.abs(tmp_list[-1]-idx) == 1:
-                    print(tmp_list)
-                    break
-            idx += 1
-    
-        SteadyStateMagnitude = np.sqrt(np.mean(
-            np.square(
-                np.array(
-                    SteadyStateMagnitude
-                    ))))
+    def parallel_steady_state_calculation(self, magnitude: pd.DataFrame):
+        with ThreadPoolExecutor() as executor:
+            steady_state_magnitudes = list(executor.map(
+                self.SteadystateNormalCalculation,
+                [magnitude[col].values for col in magnitude.columns]
+            ))
+        return pd.Series(steady_state_magnitudes, index=magnitude.columns)
 
-        return SteadyStateMagnitude
-                                     
-    def MeanNominalVoltageCalculation(self, 
-                                    SteadyStateMagnitude: float) -> float:
-        for item in self.MeanNominalPhaseVoltages:
-            if SteadyStateMagnitude <= 1.2*item and SteadyStateMagnitude >= 0.8*item:
-                MeanNominalVoltage = item
-                break
-        return MeanNominalVoltage
+    @staticmethod
+    def SteadystateNormalCalculation(column):
+        return _steady_state_calculation(column)
 
-    
+    def MeanNominalVoltageCalculation(self, SteadyStateMagnitude: float) -> float:
+        mask = (SteadyStateMagnitude <= 1.2 * self.MeanNominalPhaseVoltages) & (SteadyStateMagnitude >= 0.8 * self.MeanNominalPhaseVoltages)
+        if np.any(mask):
+            return self.MeanNominalPhaseVoltages[mask][0]
+        return np.nan
+
+@njit
+def _steady_state_calculation(column):
+    diff = np.diff(column)
+    steady_state_mask = np.abs(np.round(diff, decimals=0)) <= 0
+    steady_state_indices = np.where(steady_state_mask)[0]
+    if len(steady_state_indices) > 0:
+        steady_state_values = column[steady_state_indices]
+        return np.sqrt(np.mean(np.square(steady_state_values)))
+    return np.nan

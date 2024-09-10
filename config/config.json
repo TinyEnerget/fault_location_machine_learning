@@ -1,9 +1,12 @@
 {
     "exp_name": "test",
     "ml_model_type": [
-        "forest",
+        "forest", 
         "hydra"
     ],
+
+    "use_relaive_units": 1,
+
     "feature": [
         "current_A_begin",
         "current_A_end",

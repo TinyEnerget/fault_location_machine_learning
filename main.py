@@ -1,3 +1,4 @@
+import attr
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
@@ -44,7 +45,7 @@ class LearnProcess:
 
         self.exp_name = self.model_config['exp_name']
 
-        self.use_relaive_units = 0
+        self.use_relaive_units = self.model_config['use_relaive_units']
 
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
@@ -155,6 +156,8 @@ class LearnProcess:
 
         self = self._load_data()
 
+        self = self.relative_unit_conversion()
+
         self = self._symmetrical_components_names()
 
         self = self._symmetrical_components()
@@ -244,6 +247,28 @@ class LearnProcess:
 
         return self
     
+    def relative_unit_conversion(self):
+        
+        if self.use_relaive_units == True:
+            magnitude_list = []
+            for exp_name in self.exp_list:
+                if "seq" not in exp_name.split(sep="_") and "angle" not in exp_name.split(sep="_"):
+                    print(exp_name)
+                    magnitude_list.append(exp_name)
+
+            for exp_name in magnitude_list:
+                print(f"Converting {exp_name} to relative units")
+                setattr(self, exp_name, pmu_ru(
+                    magnitude=getattr(self, exp_name),
+                    measurement_type=exp_name.split("_")[0]).measurement())
+                print("Completed!", "\n")
+        else:
+            print("Relative unit conversion is not needed", "\n")
+            return self
+                
+        return self
+
+
     def _symmetrical_components_names(self):
 
         self.symmetrical_components_names = []

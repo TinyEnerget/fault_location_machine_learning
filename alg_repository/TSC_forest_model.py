@@ -128,10 +128,6 @@ class TimeSeriesClassifierForest:
 
         Y_pred = model.predict(X_test)
         Y_pred_proba = model.predict_proba(X_test)
-        print("Y_pred:", Y_pred_proba)
-        pd.DataFrame(Y_test).to_csv('Y_test.csv')
-        pd.DataFrame(Y_pred).to_csv('Y_pred.csv')
-        pd.DataFrame(Y_pred_proba).to_csv('Y_pred_proba.csv')
         accuracy = accuracy_score(Y_test, Y_pred)
         report = classification_report(Y_test, Y_pred, output_dict=True, zero_division=0 )
         print("Accuracy:", accuracy)
@@ -140,13 +136,16 @@ class TimeSeriesClassifierForest:
         self.test_model_efficiency(Y_pred, Y_pred_proba, self.marker_test)
 
         return accuracy, report
-    
-    
+
     def visualization(self, Y_test, Y_pred, Y_pred_proba):
         """
         Visualizes the true and predicted labels for the test dataset.
         
-        This method creates a scatter plot that displays the true labels (marked with green asterisks) and the predicted labels (marked with red circles) for the test dataset. The plot is labeled with the x-axis as "Sample Index" and the y-axis as "Label", and the title is "True vs Predicted Labels". The legend distinguishes between the true and predicted labels.
+        This method creates a scatter plot that displays the true labels 
+        (marked with green asterisks) and the predicted labels (marked with red circles) for 
+        the test dataset. The plot is labeled with the x-axis as "Sample Index" and the y-axis as 
+        "Label", and the title is "True vs Predicted Labels". The legend distinguishes between 
+        the true and predicted labels.
         """
         # Визуализация результатов
         fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(30, 20))
@@ -222,18 +221,37 @@ class TimeSeriesClassifierForest:
 
         # Сохранение графиков
     
-        plt.savefig("graf\\classification_results_" 
+        plt.savefig("graf\\forest\\classification_results_" 
                     + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
                     + ".png", dpi=500, bbox_inches="tight")    
-        
+
     def test_model_efficiency(self, 
                               Y_pred: np.ndarray, 
                               Y_pred_proba: np.ndarray,
                               marker_test: np.ndarray):
+        """
+        Evaluates the efficiency of different methods and visualizes the results using a histogram plot.
+        
+        This function takes in the predicted labels, predicted probabilities, and a marker array for the test set. It then calculates the errors for various methods, including the "one" method, methods for testing, the STO method, and the weighted average method. The results are stored in a dictionary called `meta_result`.
+        
+        The function also generates separate dictionaries for the weighted average method (`only_predict_result_avg`) and the "one" method (`only_predict_result_one`). These dictionaries are used to generate separate histogram plots for these methods.
+        
+        Finally, the function calls the `visualization_effiency` method three times, passing in the `meta_result`, `only_predict_result_avg`, and `only_predict_result_one` dictionaries, along with two sets of bin edges (`bins_base` and `bins_hight`). This generates the histogram plots for the different methods and error ranges.
+        """
+        Y_pred = np.array(
+            pd.DataFrame(Y_pred)
+            )
+        Y_pred_proba = np.array(
+            pd.DataFrame(Y_pred_proba)
+            )
+        marker_test = np.array(
+            pd.DataFrame(marker_test)
+            )
+
         fileNameAimReposytory = os.listdir(
             'C:\\Users\\Vlad Titov\\Desktop\\Work\\fault_location_machine_learning\\aim methods'
         )
-
+    
         fileNameAimReposytoryList = re.findall(
             r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\d|\W|$)|\d+', 
            fileNameAimReposytory[0].split('.')[0])
@@ -294,6 +312,14 @@ class TimeSeriesClassifierForest:
                 "methods_errors_one": methods_errors_one
             }
 
+            only_predict_result_avg = {
+                "methods_errors_weight_avg": methods_errors_weight_avg
+            }
+
+            only_predict_result_one = {
+                "methods_errors_one": methods_errors_one
+                }
+
         elif "Two" in fileNameAimReposytoryList:
 
             bins_base = [0, 1, np.inf]
@@ -348,7 +374,7 @@ class TimeSeriesClassifierForest:
             
 
             methods_errors_one = self.one_method(
-                np.array(ErrorsPerMethod), marker_test, Y_pred
+                np.array(ErrorsPerMethod), marker_test, np.array(Y_pred)
             )
 
             methods_errors = self.methods_for_test(
@@ -379,22 +405,58 @@ class TimeSeriesClassifierForest:
                 "methods_errors_weight_avg": methods_errors_weight_avg,
                 "methods_errors_one": methods_errors_one
             }
+
+            only_predict_result_avg = {
+                "methods_errors_weight_avg": methods_errors_weight_avg
+            }
+
+            only_predict_result_one = {
+                "methods_errors_one": methods_errors_one
+                }
             
 
-        self.visualization_effiency(meta_result, bins_base)
-        self.visualization_effiency(meta_result, bins_hight)
+        self.visualization_effiency(meta_result, bins_base, name="full_base")
+        self.visualization_effiency(meta_result, bins_hight, name="full_hight")
 
-        return meta_result
+        self.visualization_effiency(
+            only_predict_result_avg, bins_base,(6,6), name="avg_base"
+            )
+        self.visualization_effiency(
+            only_predict_result_avg, bins_hight, (8,6), name="avg_hight"
+            )
 
-    def visualization_effiency(self, meta_result, bins):
+        self.visualization_effiency(
+            only_predict_result_one, bins_base, (6,6), name="one_base"
+            )
+        self.visualization_effiency(
+            only_predict_result_one, bins_hight, (8,6), name="one_hight"
+            )
 
+        return 
+
+    def visualization_effiency(self, meta_result, bins, figsize = (12, 8), name="full"):
+        """
+        Visualizes the efficiency of different methods using a histogram plot.
+        
+        This function takes in a dictionary of results from various methods and a set of bins to use for the histogram. It then creates a dataframe from the results, calculates the histogram counts for each bin, and plots the histogram using Matplotlib.
+        
+        The function also includes helper functions to create the dataframe, calculate the histogram, plot the histogram, and automatically generate the category labels for the x-axis.
+        
+        Args:
+            meta_result (dict): A dictionary containing the results from various methods.
+            bins (list): A list of bin edges to use for the histogram.
+        
+        Returns:
+            None
+        """
+                
         def create_dataframe(data, column_name='error'):
             return pd.DataFrame(data, columns=[column_name])
 
         def calculate_histogram(df, bins):
             return np.histogram(df.error, bins=bins)
 
-        def plot_histogram(data_dict, categories, figsize=(12, 8)):
+        def plot_histogram(data_dict, categories, figsize=figsize):
             fig, ax = plt.subplots(figsize=figsize, layout='constrained')
             bar_width = 0.8 / len(data_dict)
             x = np.arange(len(categories))
@@ -411,6 +473,9 @@ class TimeSeriesClassifierForest:
             ax.set_ylabel('Количество элементов входящих в промежуток')
             ax.grid(True, linestyle="-", color="0.75")
             fig.legend(loc='outside upper right')
+            plt.savefig("graf\\forest\\classification_results_"+name+"_" 
+                    + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
+                    + ".png", dpi=500, bbox_inches="tight")
             plt.show()
 
         def autolabel(ax, rects):
@@ -445,6 +510,19 @@ class TimeSeriesClassifierForest:
                     ErrorsPerMethod: np.ndarray, 
                     marker_test: np.ndarray, 
                     Y_pred_proba: np.ndarray):
+        """
+        Calculates the absolute mean error for each experiment using a weighted average method.
+        
+        This method takes in the errors per method, the marker test data, and the predicted probabilities for each experiment. It then calculates the absolute mean error for each experiment using a weighted average of the errors, where the weights are the predicted probabilities for each method. The resulting errors for each experiment are returned as an array.
+        
+        Args:
+            ErrorsPerMethod (np.ndarray): A 2D numpy array containing the errors for each method and each experiment.
+            marker_test (np.ndarray): A 1D numpy array containing the experiment indices for the test data.
+            Y_pred_proba (np.ndarray): A 2D numpy array containing the predicted probabilities for each method and each experiment.
+        
+        Returns:
+            np.ndarray: An array of the absolute mean errors for each experiment.
+        """    
 
         methods_errors = []
 
@@ -461,7 +539,20 @@ class TimeSeriesClassifierForest:
             ErrorsPerMethod: np.ndarray,
             marker_test: np.ndarray,
             Y_pred: np.ndarray):
-
+        """
+        Calculates the absolute mean error for each experiment using the one_method approach.
+        
+        This method takes in the errors per method, the marker test data, and the predicted values for each experiment. It then calculates the absolute mean error for each experiment using the one_method approach and returns an array of the errors for each experiment.
+        
+        Args:
+            ErrorsPerMethod (np.ndarray): A 2D numpy array containing the errors for each method and each experiment.
+            marker_test (np.ndarray): A 1D numpy array containing the experiment indices for the test data.
+            Y_pred (np.ndarray): A 2D numpy array containing the predicted values for each experiment.
+        
+        Returns:
+            np.ndarray: An array of the absolute mean errors for each experiment.
+        """
+          
         methods_errors = []
 
         for idx in range(len(Y_pred)):
@@ -476,6 +567,19 @@ class TimeSeriesClassifierForest:
             ErrorsPerMethod: np.ndarray,
             marker_test: np.ndarray
             ):
+        """
+        Calculates the absolute mean error for each experiment using the STO (Single Test Observation) method.
+        
+        This method takes in the errors per method and the marker test data, and calculates the absolute mean error for each experiment. It then returns an array of the errors for each experiment.
+        
+        Args:
+            ErrorsPerMethod (np.ndarray): A 2D numpy array containing the errors for each method and each experiment.
+            marker_test (np.ndarray): A 1D numpy array containing the experiment indices for the test data.
+        
+        Returns:
+            np.ndarray: An array of the absolute mean errors for each experiment.
+        """
+                
         methods_errors = []
 
         for idx in range(len(marker_test)):
@@ -489,6 +593,19 @@ class TimeSeriesClassifierForest:
                         ErrorsPerMethod: np.ndarray,
                         marker_test: np.ndarray,
                         MethodsList: list):
+        """
+        Calculates the errors for each method on the test dataset.
+        
+        This method takes in the errors per method, the marker test data, and a list of method names. It then calculates the absolute mean error for each method and returns a DataFrame containing the errors for each method.
+        
+        Args:
+            ErrorsPerMethod (np.ndarray): A 2D numpy array containing the errors for each method and each experiment.
+            marker_test (np.ndarray): A 1D numpy array containing the experiment indices for the test data.
+            MethodsList (list): A list of method names.
+        
+        Returns:
+            np.ndarray: A DataFrame containing the errors for each method.
+        """
         
         method_errors_df = pd.DataFrame(columns=MethodsList)
 
@@ -503,8 +620,6 @@ class TimeSeriesClassifierForest:
         
         return np.array(method_errors_df)
     
-    
-
     def main(self):
         """
         Executes the main workflow of the time series classification model.
