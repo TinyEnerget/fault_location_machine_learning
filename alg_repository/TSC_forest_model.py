@@ -41,11 +41,13 @@ class TimeSeriesClassifierForest:
     def __init__(self, 
                  config: dict,
                  X: np.ndarray,
-                 Y: np.ndarray
+                 Y: np.ndarray,
+                 name: str
                  ):
         self.X = X
         self.Y = Y
         self.config = config
+        self.name = name
 
 
     def data_preprocess(self):
@@ -166,7 +168,7 @@ class TimeSeriesClassifierForest:
         axes[0, 0].set_xlim(min(np.unique(Y_test)) - 0.5, max(np.unique(Y_test)) + 0.5)
         axes[0, 0].set_ylim(min(np.unique(Y_test)) - 0.5, max(np.unique(Y_test)) + 0.5)
         axes[0, 0].set_title("True vs Predicted Labels", fontsize=30)
-        axes[0, 0].legend()
+        #axes[0, 0].legend()
 
         # Метрики производительности
         precision = precision_score(Y_test, Y_pred, average=None)
@@ -220,10 +222,10 @@ class TimeSeriesClassifierForest:
             axes[1, 1].legend(loc="lower right")
 
         # Сохранение графиков
-    
-        plt.savefig("graf\\forest\\classification_results_" 
-                    + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
-                    + ".png", dpi=500, bbox_inches="tight")    
+        adress = "graf\\forest\\" + self.name
+        if not os.path.exists(adress):
+                os.makedirs(adress)
+        plt.savefig(adress + "\\"+ "classification_" + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M") + ".svg", dpi=500, bbox_inches="tight")    
 
     def test_model_efficiency(self, 
                               Y_pred: np.ndarray, 
@@ -473,10 +475,17 @@ class TimeSeriesClassifierForest:
             ax.set_ylabel('Количество элементов входящих в промежуток')
             ax.grid(True, linestyle="-", color="0.75")
             fig.legend(loc='outside upper right')
-            plt.savefig("graf\\forest\\classification_results_"+name+"_" 
-                    + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
-                    + ".png", dpi=500, bbox_inches="tight")
-            plt.show()
+
+            adress = "graf\\forest\\" + self.name
+            if not os.path.exists(adress):
+                    os.makedirs(adress)
+            plt.savefig(adress + "\\"+ "classification_results_" + name + "_" +
+                        datetime.datetime.now().strftime("%d_%m_%Y_%H_%M") + ".svg", dpi=500, bbox_inches="tight")
+
+            #plt.savefig("graf\\forest\\classification_results_"+name+"_" 
+            #        + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
+            #        + ".png", dpi=500, bbox_inches="tight")
+            #plt.show()
 
         def autolabel(ax, rects):
             for rect in rects:

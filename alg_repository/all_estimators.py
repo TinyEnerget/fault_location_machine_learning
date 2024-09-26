@@ -4,6 +4,7 @@ from sklearn.metrics import (accuracy_score, classification_report,
                               precision_score, recall_score, f1_score, 
                               confusion_matrix, roc_curve, auc)
 from sklearn.preprocessing import label_binarize
+from aeon.registry import all_estimators
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -14,30 +15,6 @@ import re
 
 
 class AllEstimators:
-    """
-        A class for training and evaluating a time series classification model using a random forest approach.
-
-        Args:
-            config (dict): A dictionary containing the configuration parameters for the model.
-            X (numpy.ndarray): The input data.
-            Y (numpy.ndarray): The target labels.
-
-        Attributes:
-            X (numpy.ndarray): The input data.
-            Y (numpy.ndarray): The target labels.
-            config (dict): The configuration parameters for the model.
-            X_train (numpy.ndarray): The training input data.
-            X_test (numpy.ndarray): The testing input data.
-            Y_train (numpy.ndarray): The training target labels.
-            Y_test (numpy.ndarray): The testing target labels.
-            model (TimeSeriesForestClassifier): The trained model.
-
-        Methods:
-            data_preprocess(): Preprocesses the input data by splitting it into training and testing sets.
-            train_model(): Trains the time series classification model using the provided configuration.
-            test_model(): Evaluates the trained model on the testing data and prints the accuracy and classification report.
-            main(): Runs the data preprocessing, model training, and model testing steps.
-        """
         
     def __init__(self, 
                  config: dict,
@@ -47,6 +24,11 @@ class AllEstimators:
         self.X = X
         self.Y = Y
         self.config = config
+        self.estimators_list = all_estimators(
+                filter_tags={"capability:multivariate": True},
+                estimator_types="classifier",
+                as_dataframe=True,
+                )
 
 
     def data_preprocess(self):

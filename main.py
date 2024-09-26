@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import datetime
 import os
+import logging
 
 class LearnProcess:
     def __init__(
@@ -45,7 +46,10 @@ class LearnProcess:
 
         self.exp_name = self.model_config['exp_name']
 
-        self.use_relaive_units = self.model_config['use_relaive_units']
+        self.use_relative_units = self.model_config['use_relative_units']
+
+        logging.basicConfig(filename=f'logging\\{self.exp_name}.log', filemode='w',
+                             format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
@@ -207,9 +211,11 @@ class LearnProcess:
                         attr_names = measurement_types[meas_type]
                         attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
                         print('\n', attr_name, '\n', file_path + '//' + name)
+                        logging.info(f"{attr_name} in {file_path}//{name} loaded successfully")
                         setattr(self, attr_name,
                                  rename_columns(di(',', file_path + '//' + name).main_process()))
                         print("Completed!",'\n')
+                        logging.info("Completed!")
 
         elif file_path == "CSV file rep":
             measurement_types = self.measurement_types
@@ -224,9 +230,11 @@ class LearnProcess:
                     attr_names = measurement_types[meas_type]
                     attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
                     print('\n', attr_name, '\n', file_path + '//' + name)
+                    logging.info(f"{attr_name} in {file_path}//{name} loaded successfully")
                     setattr(self, attr_name,
                              rename_columns(di(',', file_path + '//' + name).main_process()))
                     print("Completed!",'\n')
+                    logging.info("Completed!")
             
         return self
 
@@ -241,15 +249,17 @@ class LearnProcess:
         """  
         # Загрузка данных
         file_path = self.exp_file_path
+        logging.info(f"Loading data from {file_path}")
         print(file_path)
         file_names = os.listdir(file_path)
+        logging.info(f"Files found: {file_names}")
         self = self._fileclassifier(file_path, file_names)
 
         return self
     
     def relative_unit_conversion(self):
         
-        if self.use_relaive_units == True:
+        if self.use_relative_units == True:
             magnitude_list = []
             for exp_name in self.exp_list:
                 if "seq" not in exp_name.split(sep="_") and "angle" not in exp_name.split(sep="_"):
@@ -258,12 +268,15 @@ class LearnProcess:
 
             for exp_name in magnitude_list:
                 print(f"Converting {exp_name} to relative units")
+                logging.info(f"Converting {exp_name} to relative units")
                 setattr(self, exp_name, pmu_ru(
                     magnitude=getattr(self, exp_name),
                     measurement_type=exp_name.split("_")[0]).measurement())
                 print("Completed!", "\n")
+                logging.info("Completed!")
         else:
             print("Relative unit conversion is not needed", "\n")
+            logging.info("Relative unit conversion is not needed")
             return self
                 
         return self
@@ -298,6 +311,7 @@ class LearnProcess:
                     getattr(self, self.symmetrical_components[name][5])
                     ).vectors_calculation())
             print('Completed ', name, '\n')
+            logging.info(f"Completed {name}")
 
         for name in self.symmetrical_components_names:
             word_list = name.split('_')
@@ -474,15 +488,22 @@ class LearnProcess:
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
                 print('Training the model: ', fit_type)
+                logging.info(f"Training model: {fit_type}")
                 print('Aim: ', aim_name.split('.')[0])
+                logging.info(f"Training model with aim: {aim_name.split('.')[0]}")
                 Y = getattr(
                     self,
                     aim_name.split('.')[0]
                 )
                 model, acc, report = self.fit_library[
-                    fit_type](self.TypeConfigParam(fit_type), X, Y).main()
+                    fit_type](self.TypeConfigParam(fit_type), X, Y, self.exp_name).main()
                 self._save_model(model, self.exp_name, 
                                  acc, report, timenow, fit_type)
+                
+                logging.info(
+                    f"Model training completed for {fit_type} with accuracy {acc}"
+                )
+                logging.info("Fin")
                 del model, acc, report
         return "Fin"
 
