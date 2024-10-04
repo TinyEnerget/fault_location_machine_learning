@@ -2,6 +2,7 @@ import attr
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
+from alg_repository.all_estimators import AllEstimators as allest
 from alg_repository.PMU_symmetrical_components import PMU_symmetrical_components as pmu_sc
 from alg_repository.PMU_relative_unit import PMU_relative_units as pmu_ru
 
@@ -130,7 +131,8 @@ class LearnProcess:
 
         self.fit_library = {
             'forest': tscf,
-            'hydra': hydrc
+            'hydra': hydrc,
+            'all_est': allest
         }
 
         self.fit_type_config = {

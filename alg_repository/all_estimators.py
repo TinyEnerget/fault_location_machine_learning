@@ -1,10 +1,13 @@
-from aeon.classification.interval_based import TimeSeriesForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (accuracy_score, classification_report,
                               precision_score, recall_score, f1_score, 
                               confusion_matrix, roc_curve, auc)
 from sklearn.preprocessing import label_binarize
 from aeon.registry import all_estimators
+from aeon.classification.compose import WeightedEnsembleClassifier
+from sklearn.preprocessing import LabelEncoder as le
+
+import importlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -19,17 +22,121 @@ class AllEstimators:
     def __init__(self, 
                  config: dict,
                  X: np.ndarray,
-                 Y: np.ndarray
+                 Y: np.ndarray,
+                 name: str
                  ):
+        self.label_code = le()
         self.X = X
         self.Y = Y
         self.config = config
-        self.estimators_list = all_estimators(
+        self.estimators = self.intilize_estimators()
+        self.weights = self.intilize_weights(self.estimators)
+        self.name = name
+        
+        
+    
+    @staticmethod
+    def intilize_estimators():
+        """
+        Initializes the estimators.
+        
+        Returns:
+            self: The updated instance of the `TimeSeriesClassifierForest` class.
+        """
+        estimators_list = all_estimators(
                 filter_tags={"capability:multivariate": True},
                 estimator_types="classifier",
                 as_dataframe=True,
                 )
 
+        tmp = []
+        for idx in range (len(estimators_list)):
+            try:
+                base_name = str(estimators_list.estimator[idx]).split(".")[2]
+                module_name = str(estimators_list.estimator[idx]).split(".")[3]
+                estimator_name = estimators_list.name[idx]
+                if (
+                    estimator_name != "ChannelEnsembleClassifier" and 
+                    estimator_name != "DummyClassifier" and
+                    estimator_name != "ElasticEnsemble" and
+                    estimator_name != "IndividualInceptionClassifier" and
+                    estimator_name != "IndividualLITEClassifier" and
+                    estimator_name != "IndividualInceptionClassifier" and
+                    estimator_name != "InceptionTimeClassifier" and
+                    estimator_name != "LITETimeClassifier" and
+                    estimator_name != "LearningShapeletClassifier" and
+                    estimator_name != "Catch22" and
+                    estimator_name != "MUSE"
+                ):
+                    estimator_module = importlib.import_module(f"aeon.classification.{base_name}.{module_name}")
+                    estimator_class = getattr(estimator_module, estimator_name)
+                    estimator = estimator_class()
+                    tmp.append([estimator_name, estimator])
+                elif estimator_name == "DummyClassifier":
+                    estimator_module = importlib.import_module(f"aeon.classification.{base_name}")
+                    estimator_class = getattr(estimator_module, estimator_name)
+                    estimator = estimator_class()
+                    tmp.append([estimator_name, estimator])
+            except Exception as e:
+                print(f"Error with {estimators_list.name[idx]}")
+                print(e)
+                continue
+        return np.array(tmp)
+    
+    @staticmethod
+    def intilize_weights(est_list):
+        """
+        Initializes the weights for a list of estimators.
+        
+        Args:
+            est_list (list): A list of estimators.
+        
+        Returns:
+            numpy.ndarray: An array of weights, where each weight is 1.
+        """
+                
+        weights = [1] * len(est_list)
+        return np.array(weights)
+    
+    def encoder_preprocessing_fit(self, input_data):
+        """
+        Preprocesses the input data by splitting it into training and testing sets.
+        
+        Args:
+            input_data (numpy.ndarray): The input data.
+            
+        Returns:
+            numpy.ndarray: The preprocessed input data.
+        """
+        fitted_enc = self.label_code.fit(input_data)
+        out_data = fitted_enc.transform(input_data)
+        return out_data, fitted_enc
+    
+    def encoder_preprocessing_trans(self, input_data, fitted_enc):
+        """
+        Preprocesses the input data by splitting it into training and testing sets.
+        
+        Args:
+            input_data (numpy.ndarray): The input data.
+            
+        Returns:
+            numpy.ndarray: The preprocessed input data.
+        """
+        out_data = fitted_enc.transform(input_data)
+        return out_data
+    
+    def decoder_preprocessing(self, input_data, fitted_enc):
+        """
+        Preprocesses the input data by splitting it into training and testing sets.
+        
+        Args:
+            input_data (numpy.ndarray): The input data.
+            
+        Returns:
+            numpy.ndarray: The preprocessed input data.
+        """
+        out_data = fitted_enc.inverse_transform(input_data)
+        return out_data
 
     def data_preprocess(self):
         """
@@ -40,10 +147,11 @@ class AllEstimators:
             Y (numpy.ndarray): The target labels.
         
         Returns:
-            self: The updated instance of the `TimeSeriesClassifierForest` class.
+            self: The updated instance of the `WeightedEnsembleClassifier` class.
         """
         X = self.X
         Y = self.Y
+
         marker = np.array(range(len(Y)))
         X_train, X_test, Y_train, Y_test, _, marker_test = train_test_split(X, 
                                                             Y,
@@ -52,13 +160,9 @@ class AllEstimators:
                                                             random_state=42)
         self.X_train = X_train
         self.X_test = X_test
-        self.Y_train = Y_train
-        self.Y_test = Y_test
+        self.Y_train, self.fitted_enc = self.encoder_preprocessing_fit(Y_train)
+        self.Y_test = self.encoder_preprocessing_trans(Y_test, self.fitted_enc)
         self.marker_test = marker_test
-        #pd.DataFrame(Y_train).to_csv('Y_train.csv')
-        #pd.DataFrame(marker_train).to_csv('marker_train.csv')
-        #pd.DataFrame(marker_test).to_csv('marker_test.csv')
-
         return self
     
     def train_model(self):
@@ -71,25 +175,16 @@ class AllEstimators:
             config (dict): The configuration parameters for the model.
         
         Returns:
-            self: The updated instance of the `TimeSeriesClassifierForest` class.
+            self: The updated instance of the `WeightedEnsembleClassifier` class.
         """
                 
         X_train = self.X_train
         Y_train = self.Y_train
-        config = self.config
+        #config = self.config
 
-        model = TimeSeriesForestClassifier(
-            base_estimator=config['base_estimator'],
-            n_estimators=config['n_estimators'],
-            n_intervals=config['n_intervals'],
-            min_interval_length=config['min_interval_length'],
-            max_interval_length=config['max_interval_length'],
-            time_limit_in_minutes=config['time_limit_in_minutes'],
-            contract_max_n_estimators=config['contract_max_n_estimators'],
-            random_state=config['random_state'],
-            n_jobs=config['n_jobs'],
-            parallel_backend= config['parallel_backend']
-        )
+        model = WeightedEnsembleClassifier(
+            classifiers = list(self.estimators[:,1]),
+            weights=self.weights)
         model.fit(X_train, Y_train)
         self.model = model
         return self
@@ -110,12 +205,13 @@ class AllEstimators:
         model = self.model
 
         Y_pred = model.predict(X_test)
+        Y_pred_dec = self.decoder_preprocessing(Y_pred, self.fitted_enc)
         Y_pred_proba = model.predict_proba(X_test)
         accuracy = accuracy_score(Y_test, Y_pred)
-        report = classification_report(Y_test, Y_pred, output_dict=True, zero_division=0 )
+        report = classification_report(Y_test, Y_pred_dec, output_dict=True, zero_division=0 )
         print("Accuracy:", accuracy)
-        print("\nClassification Report:\n", classification_report(Y_test, Y_pred))
-        self.visualization(Y_test, Y_pred, Y_pred_proba)
+        print("\nClassification Report:\n", classification_report(Y_test, Y_pred_dec))
+        self.visualization(Y_test, Y_pred_dec, Y_pred_proba)
         self.test_model_efficiency(Y_pred, Y_pred_proba, self.marker_test)
 
         return accuracy, report
@@ -200,7 +296,7 @@ class AllEstimators:
 
         # Сохранение графиков
     
-        plt.savefig("graf\\forest\\classification_results_" 
+        plt.savefig("graf\\copmose\\classification_results_" 
                     + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
                     + ".png", dpi=500, bbox_inches="tight")    
 
@@ -328,29 +424,29 @@ class AllEstimators:
             ErrorsPerMethod = pd.read_csv("Errors per method\\TwoSideMethodsErrors.csv")
             ErrorsPerMethod = ErrorsPerMethod.rename(columns=columns_name)
 
-            Y_pred_prob_name = {
-                        "0": "1",
-                        "1": "2",
-                        "2": "3",
-                        "3": "4",
-                        "4": "5",
-                        "5": "6",
-                        "6": "7",
-                        "7": "8",
-                        "8": "9",
-                        "9": "10",
-                        "10": "11",
-                        "11": "13",
-                        "12": "14",
-                        "13": "15",
-                        "14": "16",
-                        "15": "17",
-                        "16": "18"
-                        }
-            
-            Y_pred_proba = np.delete(Y_pred_proba, 4, axis=1)
-            #Y_pred_proba = Y_pred_prob_name.rename(columns=Y_pred_prob_name).drop('5', axis=1)
-            
+            #Y_pred_prob_name = {
+            #            "0": "1",
+            #            "1": "2",
+            #            "2": "3",
+            #            "3": "4",
+            #            "4": "5",
+            #            "5": "6",
+            #            "6": "7",
+            #            "7": "8",
+            #            "8": "9",
+            #            "9": "10",
+            #            "10": "11",
+            #            "11": "13",
+            #            "12": "14",
+            #            "13": "15",
+            #            "14": "16",
+            #            "15": "17",
+            #            "16": "18"
+            #            }
+            #
+            #Y_pred_proba = np.delete(Y_pred_proba, 4, axis=1)
+            ##Y_pred_proba = Y_pred_prob_name.rename(columns=Y_pred_prob_name).drop('5', axis=1)
+            #
 
             methods_errors_one = self.one_method(
                 np.array(ErrorsPerMethod), marker_test, np.array(Y_pred)
@@ -452,7 +548,9 @@ class AllEstimators:
             ax.set_ylabel('Количество элементов входящих в промежуток')
             ax.grid(True, linestyle="-", color="0.75")
             fig.legend(loc='outside upper right')
-            plt.savefig("graf\\forest\\classification_results_"+name+"_" 
+
+            ## TODO: Reconstruct structures of the file path accounting 
+            plt.savefig("graf\\compose\\classification_results_"+name+"_" 
                     + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
                     + ".png", dpi=500, bbox_inches="tight")
             plt.show()

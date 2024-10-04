@@ -1,8 +1,7 @@
 {
     "exp_name": "iii",
     "ml_model_type": [
-        "forest",
-        "hydra"
+        "all_est"
     ],
     "use_relative_units": 0,
     "feature": [
