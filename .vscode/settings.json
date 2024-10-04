@@ -1,3 +1,6 @@
 {
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "cody.autocomplete.advanced.model": "starcoder-16b",
+    "cody.autocomplete.advanced.provider": "anthropic",
+    "files.autoSave": "afterDelay"
 }

@@ -1,13 +1,18 @@
+import attr
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
+from alg_repository.all_estimators import AllEstimators as allest
 from alg_repository.PMU_symmetrical_components import PMU_symmetrical_components as pmu_sc
+from alg_repository.PMU_relative_unit import PMU_relative_units as pmu_ru
+
 import json
 import joblib
 import numpy as np
 import pandas as pd
 import datetime
 import os
+import logging
 
 class LearnProcess:
     def __init__(
@@ -41,6 +46,11 @@ class LearnProcess:
         self.aim_path = self.model_config['aim_methods_path']
 
         self.exp_name = self.model_config['exp_name']
+
+        self.use_relative_units = self.model_config['use_relative_units']
+
+        logging.basicConfig(filename=f'logging\\{self.exp_name}.log', filemode='w',
+                             format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
         self.current_A_begin = pd.DataFrame()
         self.current_B_begin = pd.DataFrame()
@@ -121,7 +131,8 @@ class LearnProcess:
 
         self.fit_library = {
             'forest': tscf,
-            'hydra': hydrc
+            'hydra': hydrc,
+            'all_est': allest
         }
 
         self.fit_type_config = {
@@ -150,6 +161,8 @@ class LearnProcess:
         self = self._aimData()
 
         self = self._load_data()
+
+        self = self.relative_unit_conversion()
 
         self = self._symmetrical_components_names()
 
@@ -200,9 +213,11 @@ class LearnProcess:
                         attr_names = measurement_types[meas_type]
                         attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
                         print('\n', attr_name, '\n', file_path + '//' + name)
+                        logging.info(f"{attr_name} in {file_path}//{name} loaded successfully")
                         setattr(self, attr_name,
                                  rename_columns(di(',', file_path + '//' + name).main_process()))
                         print("Completed!",'\n')
+                        logging.info("Completed!")
 
         elif file_path == "CSV file rep":
             measurement_types = self.measurement_types
@@ -217,9 +232,11 @@ class LearnProcess:
                     attr_names = measurement_types[meas_type]
                     attr_name = f"{attr_names[ord(phase) - ord('A')]}_{side}"
                     print('\n', attr_name, '\n', file_path + '//' + name)
+                    logging.info(f"{attr_name} in {file_path}//{name} loaded successfully")
                     setattr(self, attr_name,
                              rename_columns(di(',', file_path + '//' + name).main_process()))
                     print("Completed!",'\n')
+                    logging.info("Completed!")
             
         return self
 
@@ -234,12 +251,39 @@ class LearnProcess:
         """  
         # Загрузка данных
         file_path = self.exp_file_path
+        logging.info(f"Loading data from {file_path}")
         print(file_path)
         file_names = os.listdir(file_path)
+        logging.info(f"Files found: {file_names}")
         self = self._fileclassifier(file_path, file_names)
 
         return self
     
+    def relative_unit_conversion(self):
+        
+        if self.use_relative_units == True:
+            magnitude_list = []
+            for exp_name in self.exp_list:
+                if "seq" not in exp_name.split(sep="_") and "angle" not in exp_name.split(sep="_"):
+                    print(exp_name)
+                    magnitude_list.append(exp_name)
+
+            for exp_name in magnitude_list:
+                print(f"Converting {exp_name} to relative units")
+                logging.info(f"Converting {exp_name} to relative units")
+                setattr(self, exp_name, pmu_ru(
+                    magnitude=getattr(self, exp_name),
+                    measurement_type=exp_name.split("_")[0]).measurement())
+                print("Completed!", "\n")
+                logging.info("Completed!")
+        else:
+            print("Relative unit conversion is not needed", "\n")
+            logging.info("Relative unit conversion is not needed")
+            return self
+                
+        return self
+
+
     def _symmetrical_components_names(self):
 
         self.symmetrical_components_names = []
@@ -269,6 +313,7 @@ class LearnProcess:
                     getattr(self, self.symmetrical_components[name][5])
                     ).vectors_calculation())
             print('Completed ', name, '\n')
+            logging.info(f"Completed {name}")
 
         for name in self.symmetrical_components_names:
             word_list = name.split('_')
@@ -370,33 +415,6 @@ class LearnProcess:
                     self.config[key] = None
                 elif self.config[key] == 'infinate':
                     self.config[key] = np.inf
-
-        #n_kernels = 2,
-        #n_groups = 4,        
-        #base_estimator=None,
-        #n_estimators=20,
-        #n_intervals="sqrt",
-        #min_interval_length=3,
-        #max_interval_length=np.inf,
-        #time_limit_in_minutes=None,
-        #contract_max_n_estimators=50,
-        #random_state=None,
-        #n_jobs=5,
-        #parallel_backend= 'loky'
-        #self.config = {
-        #     'base_estimator': base_estimator,
-        #     'n_estimators': n_estimators,
-        #     'n_intervals': n_intervals,
-        #     'min_interval_length': min_interval_length,
-        #     'max_interval_length': max_interval_length,
-        #     'time_limit_in_minutes': time_limit_in_minutes,
-        #     'contract_max_n_estimators': contract_max_n_estimators,
-        #     'random_state': random_state,
-        #     'n_jobs': n_jobs,
-        #     'parallel_backend': parallel_backend,
-        #     'n_groups': n_groups,
-        #     'n_kernels': n_kernels
-        #}
         return self
     
     def TypeConfigParam(self, fit_type):
@@ -451,7 +469,7 @@ class LearnProcess:
             if not os.path.exists(adress):
                 os.makedirs(adress)
 
-            with open(adress + filename + '.json', 'w') as f:
+            with open(adress + filename + '_' + fit_type + '.json', 'w') as f:
                 json.dump(model_description, f, indent=4)
                 joblib.dump(model, model_description['model address'])
         return 
@@ -468,17 +486,26 @@ class LearnProcess:
             tuple: A tuple containing the trained model, the accuracy score, and a report of the model's performance metrics.
         """
         timenow = self._timenow()
-        config = self.TypeConfigParam(self.config)
         X = self.X
         for aim_name in os.listdir(self.aim_path):
             for fit_type in self.fit_types:
                 print('Training the model: ', fit_type)
+                logging.info(f"Training model: {fit_type}")
                 print('Aim: ', aim_name.split('.')[0])
+                logging.info(f"Training model with aim: {aim_name.split('.')[0]}")
                 Y = getattr(
                     self,
                     aim_name.split('.')[0]
                 )
-                model, acc, report = self.fit_library[fit_type](config, X, Y).main()
-                self._save_model(model, self.exp_name, acc, report, timenow, fit_type)
+                model, acc, report = self.fit_library[
+                    fit_type](self.TypeConfigParam(fit_type), X, Y, self.exp_name).main()
+                self._save_model(model, self.exp_name, 
+                                 acc, report, timenow, fit_type)
+                
+                logging.info(
+                    f"Model training completed for {fit_type} with accuracy {acc}"
+                )
+                logging.info("Fin")
+                del model, acc, report
         return "Fin"
 

@@ -1,10 +1,9 @@
-{   
-    "exp_name": "full_exp",
-
+{
+    "exp_name": "iii",
     "ml_model_type": [
-        "forest",
-        "hydra"],
-
+        "all_est"
+    ],
+    "use_relative_units": 0,
     "feature": [
         "current_A_begin",
         "current_A_end",
@@ -55,13 +54,12 @@
         "voltage_positive_seq_end",
         "voltage_positive_seq_angle_end"
     ],
-    
     "config_ml": {
         "base_estimator": "null",
         "n_estimators": 20,
         "n_intervals": "sqrt",
         "min_interval_length": 3,
-        "max_interval_length": "infinate",
+        "max_interval_length": 999,
         "time_limit_in_minutes": "null",
         "contract_max_n_estimators": 50,
         "random_state": "null",
@@ -69,11 +67,7 @@
         "parallel_backend": "loky",
         "n_groups": 4,
         "n_kernels": 2
-   },
-
-   "experiment_files_path": "CSV PMU 100fps",
-
-   "aim_methods_path": "aim methods\\"
-
-
+    },
+    "experiment_files_path": "CSV PMU 100fps",
+    "aim_methods_path": "aim methods\\"
 }
