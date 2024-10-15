@@ -1,9 +1,9 @@
 {
-    "exp_name": "iii",
+    "exp_name": "pictures",
     "ml_model_type": [
-        "all_est"
+        "forest"
     ],
-    "use_relative_units": 0,
+    "use_relative_units": 1,
     "feature": [
         "current_A_begin",
         "current_A_end",
@@ -63,11 +63,42 @@
         "time_limit_in_minutes": "null",
         "contract_max_n_estimators": 50,
         "random_state": "null",
-        "n_jobs": 5,
+        "n_jobs": 10,
         "parallel_backend": "loky",
         "n_groups": 4,
         "n_kernels": 2
     },
+
+    "Estimator Name":[
+        "Arsenal",
+        "CanonicalIntervalForestClassifier",
+        "DrCIFClassifier",
+        "DummyClassifier",
+        "FreshPRINCEClassifier",
+        "HIVECOTEV2",
+        "HydraClassifier",
+        "IndividualOrdinalTDE",
+        "IndividualTDE",
+        "IntervalForestClassifier",
+        "KNeighborsTimeSeriesClassifier",
+        "MultiRocketHydraClassifier",
+        "OrdinalTDE",
+        "QUANTClassifier",
+        "RDSTClassifier",
+        "REDCOMETS",
+        "RISTClassifier",
+        "RSTSF",
+        "RandomIntervalClassifier",
+        "RandomIntervalSpectralEnsembleClassifier",
+        "RocketClassifier",
+        "ShapeletTransformClassifier",
+        "SummaryClassifier",
+        "SupervisedIntervalClassifier",
+        "SupervisedTimeSeriesForest",
+        "TSFreshClassifier",
+        "TemporalDictionaryEnsemble",
+        "TimeSeriesForestClassifier"],
+
     "experiment_files_path": "CSV PMU 100fps",
     "aim_methods_path": "aim methods\\"
 }

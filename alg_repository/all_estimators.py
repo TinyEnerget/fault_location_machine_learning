@@ -65,17 +65,17 @@ class AllEstimators:
                     estimator_name != "InceptionTimeClassifier" and
                     estimator_name != "LITETimeClassifier" and
                     estimator_name != "LearningShapeletClassifier" and
-                    estimator_name != "Catch22" and
+                    estimator_name != "Catch22Classifier" and
                     estimator_name != "MUSE"
                 ):
                     estimator_module = importlib.import_module(f"aeon.classification.{base_name}.{module_name}")
                     estimator_class = getattr(estimator_module, estimator_name)
-                    estimator = estimator_class()
+                    estimator = estimator_class(n_jobs=1)
                     tmp.append([estimator_name, estimator])
                 elif estimator_name == "DummyClassifier":
                     estimator_module = importlib.import_module(f"aeon.classification.{base_name}")
                     estimator_class = getattr(estimator_module, estimator_name)
-                    estimator = estimator_class()
+                    estimator = estimator_class(n_jobs=1)
                     tmp.append([estimator_name, estimator])
             except Exception as e:
                 print(f"Error with {estimators_list.name[idx]}")
@@ -183,7 +183,7 @@ class AllEstimators:
         #config = self.config
 
         model = WeightedEnsembleClassifier(
-            classifiers = list(self.estimators[:,1]),
+            classifiers = list(self.estimators[:5,1]),
             weights=self.weights)
         model.fit(X_train, Y_train)
         self.model = model

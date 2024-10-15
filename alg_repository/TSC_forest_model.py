@@ -305,21 +305,27 @@ class TimeSeriesClassifierForest:
                 marker_test, 
                 Y_pred_proba)
             
+            methods_avg_errors = self.avg_method(
+                Result_method_3,
+                Result_method_4,
+                Result_method_7)
+            
             meta_result = {
-                "Result_method_3": Result_method_3,
-                "Result_method_4": Result_method_4,
-                "Result_method_7": Result_method_7,
-                "methods_errors_STO": methods_errors_STO,
-                "methods_errors_weight_avg": methods_errors_weight_avg,
-                "methods_errors_one": methods_errors_one
+                "Метод ДОМП №3": Result_method_3,
+                "Метод ДОМП №4": Result_method_4,
+                "Метод ДОМП №7": Result_method_7,
+                "Среднее арифметическое значение \n трех лучших методов ДОМП": methods_avg_errors,
+                "Среднее арифметическое значение \n всех методов ДОМП [2]": methods_errors_STO,
+                "Метод машинного обучения, \n определяющий весовые коэффициенты": methods_errors_weight_avg,
+                "Метод машинного обучения, \n выбирающий наилучший метод": methods_errors_one
             }
 
             only_predict_result_avg = {
-                "methods_errors_weight_avg": methods_errors_weight_avg
+                "Метод машинного\n обучения, определяющий\n  весовые коэффициенты": methods_errors_weight_avg
             }
 
             only_predict_result_one = {
-                "methods_errors_one": methods_errors_one
+                "Метод машинного\n обучения, выбирающий\n  наилучший метод": methods_errors_one
                 }
 
         elif "Two" in fileNameAimReposytoryList:
@@ -399,21 +405,27 @@ class TimeSeriesClassifierForest:
                 marker_test, 
                 Y_pred_proba)
             
+            methods_avg_errors = self.avg_method(
+                Result_method_7,
+                Result_method_11,
+                Result_method_17)
+            
             meta_result = {
-                "Result_method_7": Result_method_7,
-                "Result_method_11": Result_method_11,
-                "Result_method_17": Result_method_17,
-                "methods_errors_STO": methods_errors_STO,
-                "methods_errors_weight_avg": methods_errors_weight_avg,
-                "methods_errors_one": methods_errors_one
+                "Метод ДОМП №7": Result_method_7,
+                "Метод ДОМП №11": Result_method_11,
+                "Метод ДОМП №17": Result_method_17,
+                "Среднее арифметическое значение \n трех лучших методов ДОМП": methods_avg_errors,
+                "Среднее арифметическое значение \n всех методов ДОМП [2]": methods_errors_STO,
+                "Метод машинного обучения, \n определяющий весовые коэффициенты": methods_errors_weight_avg,
+                "Метод машинного обучения,\n выбирающий наилучший метод": methods_errors_one
             }
 
             only_predict_result_avg = {
-                "methods_errors_weight_avg": methods_errors_weight_avg
+                "Метод машинного обучения, \n определяющий весовые коэффициенты": methods_errors_weight_avg
             }
 
             only_predict_result_one = {
-                "methods_errors_one": methods_errors_one
+                "Метод машинного обучения, \n выбирающий наилучший метод": methods_errors_one
                 }
             
 
@@ -436,7 +448,7 @@ class TimeSeriesClassifierForest:
 
         return 
 
-    def visualization_effiency(self, meta_result, bins, figsize = (12, 8), name="full"):
+    def visualization_effiency(self, meta_result, bins, figsize = (12, 10), name="full"):
         """
         Visualizes the efficiency of different methods using a histogram plot.
         
@@ -469,12 +481,14 @@ class TimeSeriesClassifierForest:
                 autolabel(ax, bars)
 
             ax.set_xticks(x)
-            ax.set_xticklabels(categories)
+            ax.set_xticklabels(categories, fontsize=16)
             ax.set_yticks(np.arange(0, 1000, 100))
-            ax.set_xlabel('Погрешность выбранных методов, %')
-            ax.set_ylabel('Количество элементов входящих в промежуток')
+            ax.set_yticklabels(np.arange(0, 1000, 100), fontsize=16)
+            ax.set_xlabel('Погрешность выбранных методов, %', fontsize=16)
+            ax.set_ylabel('Количество элементов входящих в промежуток', fontsize=16)
             ax.grid(True, linestyle="-", color="0.75")
-            fig.legend(loc='outside upper right')
+            if len(data_dict)> 1:
+                ax.legend(fontsize=14)
 
             adress = "graf\\forest\\" + self.name
             if not os.path.exists(adress):
@@ -513,6 +527,14 @@ class TimeSeriesClassifierForest:
             return categories
 
         process_and_plot_results(meta_result,bins,autocategoies(bins))
+
+    def avg_method(
+            self, 
+            Result_method_7,
+            Result_method_11,
+            Result_method_17):
+        
+        return (Result_method_7 + Result_method_11 + Result_method_17) / 3
 
     def weigth_avg_method(
                     self, 

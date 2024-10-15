@@ -1,4 +1,3 @@
-import attr
 from alg_repository.data_importer import DataImporter as di
 from alg_repository.TSC_forest_model import TimeSeriesClassifierForest as tscf
 from alg_repository.hydra_model import HydraCNNClassifier as hydrc
