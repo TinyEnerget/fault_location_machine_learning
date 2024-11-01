@@ -159,15 +159,15 @@ class TimeSeriesClassifierForest:
         #axes[0, 0].scatter(range(len(Y_pred)), Y_pred, marker='o', facecolors='none', edgecolors='r',
         #                   label="Predicted Labels", color="red", s=30)
         axes[0, 0].plot(Y_test, Y_test, color="red", linewidth=3)
-        axes[0, 0].set_xlabel("Target classes", fontsize=30)
-        axes[0, 0].set_ylabel("Predict classes", fontsize=30)
+        axes[0, 0].set_xlabel("Реальные классы", fontsize=30)
+        axes[0, 0].set_ylabel("Предсказанные классы", fontsize=30)
         axes[0, 0].set_yticks(np.unique(Y_pred))
         axes[0, 0].set_xticks(np.unique(Y_test))
         axes[0, 0].set_yticklabels(np.unique(Y_pred), fontsize=30)
         axes[0, 0].set_xticklabels(np.unique(Y_test), fontsize=30)
         axes[0, 0].set_xlim(min(np.unique(Y_test)) - 0.5, max(np.unique(Y_test)) + 0.5)
         axes[0, 0].set_ylim(min(np.unique(Y_test)) - 0.5, max(np.unique(Y_test)) + 0.5)
-        axes[0, 0].set_title("True vs Predicted Labels", fontsize=30)
+        axes[0, 0].set_title("Совпадение реальных и предсказанных классов", fontsize=30)
         #axes[0, 0].legend()
 
         # Метрики производительности
@@ -177,9 +177,9 @@ class TimeSeriesClassifierForest:
         metrics_df = pd.DataFrame({"Precision": precision, "Recall": recall, "F1-Score": f1}, index=np.unique(Y_pred))
         sns.heatmap(metrics_df, annot=True, cmap="YlGnBu", ax=axes[0, 1],
                     annot_kws={"size": 20})
-        axes[0, 1].set_title("Performance Metrics", fontsize=25)
-        axes[0, 1].set_xlabel("Metrics", fontsize=25)
-        axes[0, 1].set_ylabel("Classes", fontsize=25)
+        axes[0, 1].set_title("Метрики производительности", fontsize=25)
+        axes[0, 1].set_xlabel("", fontsize=25)
+        axes[0, 1].set_ylabel("Методы", fontsize=25)
         axes[0, 1].tick_params(axis='both', which='major', labelsize=20)
         cbar = axes[0, 1].collections[0].colorbar
         cbar.ax.tick_params(labelsize=20)

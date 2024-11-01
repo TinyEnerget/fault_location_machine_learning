@@ -1,0 +1,185 @@
+{
+    "exp_name": "pen",
+    "Date": "31_10_2024_19_52",
+    "config": {
+        "base_estimator": null,
+        "n_estimators": 20,
+        "n_intervals": "sqrt",
+        "min_interval_length": 3,
+        "max_interval_length": "infinate",
+        "time_limit_in_minutes": null,
+        "contract_max_n_estimators": 50,
+        "random_state": null,
+        "n_jobs": 5,
+        "parallel_backend": "loky",
+        "n_groups": 4,
+        "n_kernels": 2
+    },
+    "model": [
+        "forest",
+        "hydra"
+    ],
+    "feature": [
+        "current_A_begin",
+        "current_A_end",
+        "current_B_begin",
+        "current_B_end",
+        "current_C_begin",
+        "current_C_end",
+        "voltage_A_begin",
+        "voltage_A_end",
+        "voltage_B_begin",
+        "voltage_B_end",
+        "voltage_C_begin",
+        "voltage_C_end",
+        "current_A_angle_begin",
+        "current_A_angle_end",
+        "current_B_angle_begin",
+        "current_B_angle_end",
+        "current_C_angle_begin",
+        "current_C_angle_end",
+        "voltage_A_angle_begin",
+        "voltage_A_angle_end",
+        "voltage_B_angle_begin",
+        "voltage_B_angle_end",
+        "voltage_C_angle_begin",
+        "voltage_C_angle_end",
+        "current_zero_seq_begin",
+        "current_zero_seq_angle_begin",
+        "current_negative_seq_begin",
+        "current_negative_seq_angle_begin",
+        "current_positive_seq_begin",
+        "current_positive_seq_angle_begin",
+        "voltage_zero_seq_begin",
+        "voltage_zero_seq_angle_begin",
+        "voltage_negative_seq_begin",
+        "voltage_negative_seq_angle_begin",
+        "voltage_positive_seq_begin",
+        "voltage_positive_seq_angle_begin",
+        "current_zero_seq_end",
+        "current_zero_seq_angle_end",
+        "current_negative_seq_end",
+        "current_negative_seq_angle_end",
+        "current_positive_seq_end",
+        "current_positive_seq_angle_end",
+        "voltage_zero_seq_end",
+        "voltage_zero_seq_angle_end",
+        "voltage_negative_seq_end",
+        "voltage_negative_seq_angle_end",
+        "voltage_positive_seq_end",
+        "voltage_positive_seq_angle_end"
+    ],
+    "accuracy": 0.7158351409978309,
+    "report": {
+        "1": {
+            "precision": 0.75,
+            "recall": 0.46153846153846156,
+            "f1-score": 0.5714285714285714,
+            "support": 26.0
+        },
+        "2": {
+            "precision": 0.8095238095238095,
+            "recall": 0.85,
+            "f1-score": 0.8292682926829269,
+            "support": 40.0
+        },
+        "3": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "f1-score": 0.4,
+            "support": 2.0
+        },
+        "4": {
+            "precision": 1.0,
+            "recall": 0.4444444444444444,
+            "f1-score": 0.6153846153846153,
+            "support": 9.0
+        },
+        "5": {
+            "precision": 0.6938775510204082,
+            "recall": 0.7083333333333334,
+            "f1-score": 0.7010309278350516,
+            "support": 48.0
+        },
+        "7": {
+            "precision": 0.675,
+            "recall": 0.7297297297297297,
+            "f1-score": 0.7012987012987014,
+            "support": 74.0
+        },
+        "8": {
+            "precision": 0.3953488372093023,
+            "recall": 0.5,
+            "f1-score": 0.44155844155844154,
+            "support": 34.0
+        },
+        "9": {
+            "precision": 0.5405405405405406,
+            "recall": 0.38461538461538464,
+            "f1-score": 0.44943820224719105,
+            "support": 52.0
+        },
+        "10": {
+            "precision": 0.5714285714285714,
+            "recall": 0.47058823529411764,
+            "f1-score": 0.5161290322580646,
+            "support": 17.0
+        },
+        "11": {
+            "precision": 0.6935483870967742,
+            "recall": 0.671875,
+            "f1-score": 0.6825396825396826,
+            "support": 64.0
+        },
+        "13": {
+            "precision": 0.3,
+            "recall": 0.25,
+            "f1-score": 0.2727272727272727,
+            "support": 12.0
+        },
+        "14": {
+            "precision": 0.4444444444444444,
+            "recall": 0.2857142857142857,
+            "f1-score": 0.34782608695652173,
+            "support": 14.0
+        },
+        "15": {
+            "precision": 0.6451612903225806,
+            "recall": 0.5714285714285714,
+            "f1-score": 0.606060606060606,
+            "support": 35.0
+        },
+        "16": {
+            "precision": 0.7225433526011561,
+            "recall": 0.8445945945945946,
+            "f1-score": 0.778816199376947,
+            "support": 148.0
+        },
+        "17": {
+            "precision": 0.7105263157894737,
+            "recall": 0.7043478260869566,
+            "f1-score": 0.7074235807860262,
+            "support": 115.0
+        },
+        "18": {
+            "precision": 0.851063829787234,
+            "recall": 0.8620689655172413,
+            "f1-score": 0.8565310492505352,
+            "support": 232.0
+        },
+        "accuracy": 0.7158351409978309,
+        "macro avg": {
+            "precision": 0.6335212664436017,
+            "recall": 0.57745492701857,
+            "f1-score": 0.5923413288994472,
+            "support": 922.0
+        },
+        "weighted avg": {
+            "precision": 0.7146981680620539,
+            "recall": 0.7158351409978309,
+            "f1-score": 0.7108899758377664,
+            "support": 922.0
+        }
+    },
+    "model address": "Model\\model_31_10_2024_19_52\\pen_forest.pkl"
+}

@@ -7,6 +7,7 @@ from aeon.registry import all_estimators
 from aeon.classification.compose import WeightedEnsembleClassifier
 from sklearn.preprocessing import LabelEncoder as le
 
+from json import load
 import importlib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -43,6 +44,8 @@ class AllEstimators:
         Returns:
             self: The updated instance of the `TimeSeriesClassifierForest` class.
         """
+        config = load(open("C:\\Users\\Vlad Titov\\Desktop\\Work\\fault_location_machine_learning\\config\\config.json"))["Estimator Name"]
+
         estimators_list = all_estimators(
                 filter_tags={"capability:multivariate": True},
                 estimator_types="classifier",
@@ -56,26 +59,21 @@ class AllEstimators:
                 module_name = str(estimators_list.estimator[idx]).split(".")[3]
                 estimator_name = estimators_list.name[idx]
                 if (
-                    estimator_name != "ChannelEnsembleClassifier" and 
-                    estimator_name != "DummyClassifier" and
-                    estimator_name != "ElasticEnsemble" and
-                    estimator_name != "IndividualInceptionClassifier" and
-                    estimator_name != "IndividualLITEClassifier" and
-                    estimator_name != "IndividualInceptionClassifier" and
-                    estimator_name != "InceptionTimeClassifier" and
-                    estimator_name != "LITETimeClassifier" and
-                    estimator_name != "LearningShapeletClassifier" and
-                    estimator_name != "Catch22Classifier" and
-                    estimator_name != "MUSE"
+                    estimator_name in config and estimator_name != "DummyClassifier"
                 ):
                     estimator_module = importlib.import_module(f"aeon.classification.{base_name}.{module_name}")
                     estimator_class = getattr(estimator_module, estimator_name)
-                    estimator = estimator_class(n_jobs=1)
-                    tmp.append([estimator_name, estimator])
-                elif estimator_name == "DummyClassifier":
+                    estimator = estimator_class()
+                    try:
+                        tmp.append([estimator_name, estimator])
+                    except Exception as e:
+                        print(f"Error with {estimators_list.name[idx]}")
+                        print(e)
+
+                elif estimator_name == "DummyClassifier" and estimator_name in config:
                     estimator_module = importlib.import_module(f"aeon.classification.{base_name}")
                     estimator_class = getattr(estimator_module, estimator_name)
-                    estimator = estimator_class(n_jobs=1)
+                    estimator = estimator_class()
                     tmp.append([estimator_name, estimator])
             except Exception as e:
                 print(f"Error with {estimators_list.name[idx]}")
@@ -153,16 +151,27 @@ class AllEstimators:
         Y = self.Y
 
         marker = np.array(range(len(Y)))
+
+        print(f"Uniq values in Y: {np.unique(Y)}")
+
         X_train, X_test, Y_train, Y_test, _, marker_test = train_test_split(X, 
                                                             Y,
                                                             marker,
-                                                            test_size=0.2,
-                                                            random_state=42)
+                                                            test_size=0.2
+                                                            )
         self.X_train = X_train
         self.X_test = X_test
+
+        print(f"Unique target labels pre: {np.unique(Y_train)}")
+        print(f"Unique target test labels pre: {np.unique(Y_test)}")
+
         self.Y_train, self.fitted_enc = self.encoder_preprocessing_fit(Y_train)
         self.Y_test = self.encoder_preprocessing_trans(Y_test, self.fitted_enc)
         self.marker_test = marker_test
+
+        print(f"Unique target labels: {np.unique(self.Y_train)}")
+        print(f"Unique target test labels: {np.unique(self.Y_test)}")
+        
         return self
     
     def train_model(self):
@@ -183,7 +192,7 @@ class AllEstimators:
         #config = self.config
 
         model = WeightedEnsembleClassifier(
-            classifiers = list(self.estimators[:5,1]),
+            classifiers = list(self.estimators[:,1]),
             weights=self.weights)
         model.fit(X_train, Y_train)
         self.model = model
@@ -205,13 +214,30 @@ class AllEstimators:
         model = self.model
 
         Y_pred = model.predict(X_test)
+
+        print(
+            "Unique classes in Y_test:", np.unique(Y_test), 
+            "\n",
+            "Unique classes in Y_pred:",np.unique(Y_pred),
+        )
+
         Y_pred_dec = self.decoder_preprocessing(Y_pred, self.fitted_enc)
+        Y_test_dec = self.decoder_preprocessing(Y_test, self.fitted_enc)
+        print("Decoded Y_test:", Y_test_dec, "\n", "Decoded Y_pred:",Y_pred_dec)
+
         Y_pred_proba = model.predict_proba(X_test)
-        accuracy = accuracy_score(Y_test, Y_pred)
-        report = classification_report(Y_test, Y_pred_dec, output_dict=True, zero_division=0 )
+
+        Y_init_name = self.model.classes_
+
+        print(f"Initiall class names: {self.decoder_preprocessing(Y_init_name, self.fitted_enc)}")
+
+        accuracy = accuracy_score(Y_test_dec, Y_pred_dec)
+        report = classification_report(Y_test, Y_pred, output_dict=True, zero_division=0 )
+
         print("Accuracy:", accuracy)
-        print("\nClassification Report:\n", classification_report(Y_test, Y_pred_dec))
-        self.visualization(Y_test, Y_pred_dec, Y_pred_proba)
+        print("\nClassification Report:\n", report)
+
+        self.visualization(Y_test, Y_pred, Y_pred_proba)
         self.test_model_efficiency(Y_pred, Y_pred_proba, self.marker_test)
 
         return accuracy, report
@@ -258,7 +284,7 @@ class AllEstimators:
         cbar.ax.tick_params(labelsize=20)
         
         # Матрица ошибок
-        cm = confusion_matrix(Y_test, Y_pred, labels=np.unique(Y_test))
+        cm = confusion_matrix(Y_test, Y_pred, labels=self.model.classes_)
         sns.heatmap(cm, annot=True, cmap="YlGnBu", ax=axes[1, 0],
                     annot_kws={"size": 20})
         axes[1, 0].set_title("Confusion Matrix")
@@ -266,8 +292,8 @@ class AllEstimators:
         axes[1, 0].set_ylabel("True Label")
         
         # ROC кривая и AUC
-        n_classes = len(np.unique(Y_test))
-        Y_test_bin = label_binarize(Y_test, classes=np.unique(Y_test))
+        n_classes = len(self.model.classes_)
+        Y_test_bin = label_binarize(Y_test, classes=self.model.classes_)
 
         if n_classes == 2:
             fpr, tpr, _ = roc_curve(Y_test, Y_pred_proba[:, 1])
@@ -295,6 +321,10 @@ class AllEstimators:
             axes[1, 1].legend(loc="lower right")
 
         # Сохранение графиков
+
+        adress = "graf\\copmose\\"
+        if not os.path.exists(adress):
+                os.makedirs(adress)
     
         plt.savefig("graf\\copmose\\classification_results_" 
                     + datetime.datetime.now().strftime("%d_%m_%Y_%H_%M")
@@ -424,29 +454,6 @@ class AllEstimators:
             ErrorsPerMethod = pd.read_csv("Errors per method\\TwoSideMethodsErrors.csv")
             ErrorsPerMethod = ErrorsPerMethod.rename(columns=columns_name)
 
-            #Y_pred_prob_name = {
-            #            "0": "1",
-            #            "1": "2",
-            #            "2": "3",
-            #            "3": "4",
-            #            "4": "5",
-            #            "5": "6",
-            #            "6": "7",
-            #            "7": "8",
-            #            "8": "9",
-            #            "9": "10",
-            #            "10": "11",
-            #            "11": "13",
-            #            "12": "14",
-            #            "13": "15",
-            #            "14": "16",
-            #            "15": "17",
-            #            "16": "18"
-            #            }
-            #
-            #Y_pred_proba = np.delete(Y_pred_proba, 4, axis=1)
-            ##Y_pred_proba = Y_pred_prob_name.rename(columns=Y_pred_prob_name).drop('5', axis=1)
-            #
 
             methods_errors_one = self.one_method(
                 np.array(ErrorsPerMethod), marker_test, np.array(Y_pred)

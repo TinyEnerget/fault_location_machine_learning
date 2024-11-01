@@ -71,6 +71,36 @@
         "n_kernels": 2
    },
 
+   "Estimator Name":[
+        "Arsenal",
+        "CanonicalIntervalForestClassifier",
+        "DrCIFClassifier",
+        "DummyClassifier",
+        "FreshPRINCEClassifier",
+        "HIVECOTEV2",
+        "HydraClassifier",
+        "IndividualOrdinalTDE",
+        "IndividualTDE",
+        "IntervalForestClassifier",
+        "KNeighborsTimeSeriesClassifier",
+        "MultiRocketHydraClassifier",
+        "OrdinalTDE",
+        "QUANTClassifier",
+        "RDSTClassifier",
+        "REDCOMETS",
+        "RISTClassifier",
+        "RSTSF",
+        "RandomIntervalClassifier",
+        "RandomIntervalSpectralEnsembleClassifier",
+        "RocketClassifier",
+        "ShapeletTransformClassifier",
+        "SummaryClassifier",
+        "SupervisedIntervalClassifier",
+        "SupervisedTimeSeriesForest",
+        "TSFreshClassifier",
+        "TemporalDictionaryEnsemble",
+        "TimeSeriesForestClassifier"],
+
    "experiment_files_path": "CSV PMU 100fps",
 
    "aim_methods_path": "aim methods\\"

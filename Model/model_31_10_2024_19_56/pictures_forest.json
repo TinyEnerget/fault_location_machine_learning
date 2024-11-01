@@ -1,0 +1,142 @@
+{
+    "exp_name": "pictures",
+    "Date": "31_10_2024_19_56",
+    "config": {
+        "base_estimator": null,
+        "n_estimators": 20,
+        "n_intervals": "sqrt",
+        "min_interval_length": 3,
+        "max_interval_length": "infinate",
+        "time_limit_in_minutes": null,
+        "contract_max_n_estimators": 50,
+        "random_state": null,
+        "n_jobs": 10,
+        "parallel_backend": "loky",
+        "n_groups": 4,
+        "n_kernels": 2
+    },
+    "model": [
+        "forest"
+    ],
+    "feature": [
+        "current_A_begin",
+        "current_A_end",
+        "current_B_begin",
+        "current_B_end",
+        "current_C_begin",
+        "current_C_end",
+        "voltage_A_begin",
+        "voltage_A_end",
+        "voltage_B_begin",
+        "voltage_B_end",
+        "voltage_C_begin",
+        "voltage_C_end",
+        "current_A_angle_begin",
+        "current_A_angle_end",
+        "current_B_angle_begin",
+        "current_B_angle_end",
+        "current_C_angle_begin",
+        "current_C_angle_end",
+        "voltage_A_angle_begin",
+        "voltage_A_angle_end",
+        "voltage_B_angle_begin",
+        "voltage_B_angle_end",
+        "voltage_C_angle_begin",
+        "voltage_C_angle_end",
+        "current_zero_seq_begin",
+        "current_zero_seq_angle_begin",
+        "current_negative_seq_begin",
+        "current_negative_seq_angle_begin",
+        "current_positive_seq_begin",
+        "current_positive_seq_angle_begin",
+        "voltage_zero_seq_begin",
+        "voltage_zero_seq_angle_begin",
+        "voltage_negative_seq_begin",
+        "voltage_negative_seq_angle_begin",
+        "voltage_positive_seq_begin",
+        "voltage_positive_seq_angle_begin",
+        "current_zero_seq_end",
+        "current_zero_seq_angle_end",
+        "current_negative_seq_end",
+        "current_negative_seq_angle_end",
+        "current_positive_seq_end",
+        "current_positive_seq_angle_end",
+        "voltage_zero_seq_end",
+        "voltage_zero_seq_angle_end",
+        "voltage_negative_seq_end",
+        "voltage_negative_seq_angle_end",
+        "voltage_positive_seq_end",
+        "voltage_positive_seq_angle_end"
+    ],
+    "accuracy": 0.5780911062906724,
+    "report": {
+        "1": {
+            "precision": 0.5684931506849316,
+            "recall": 0.6747967479674797,
+            "f1-score": 0.6171003717472119,
+            "support": 123.0
+        },
+        "3": {
+            "precision": 0.49333333333333335,
+            "recall": 0.5138888888888888,
+            "f1-score": 0.5034013605442176,
+            "support": 144.0
+        },
+        "4": {
+            "precision": 0.6525821596244131,
+            "recall": 0.7128205128205128,
+            "f1-score": 0.6813725490196079,
+            "support": 195.0
+        },
+        "6": {
+            "precision": 0.6261682242990654,
+            "recall": 0.6203703703703703,
+            "f1-score": 0.6232558139534884,
+            "support": 108.0
+        },
+        "7": {
+            "precision": 0.5508982035928144,
+            "recall": 0.6344827586206897,
+            "f1-score": 0.5897435897435898,
+            "support": 145.0
+        },
+        "8": {
+            "precision": 0.5416666666666666,
+            "recall": 0.3611111111111111,
+            "f1-score": 0.43333333333333335,
+            "support": 72.0
+        },
+        "9": {
+            "precision": 0.38095238095238093,
+            "recall": 0.2,
+            "f1-score": 0.2622950819672132,
+            "support": 40.0
+        },
+        "10": {
+            "precision": 0.6052631578947368,
+            "recall": 0.45098039215686275,
+            "f1-score": 0.5168539325842696,
+            "support": 51.0
+        },
+        "11": {
+            "precision": 0.65625,
+            "recall": 0.4772727272727273,
+            "f1-score": 0.5526315789473685,
+            "support": 44.0
+        },
+        "accuracy": 0.5780911062906724,
+        "macro avg": {
+            "precision": 0.5639563641164824,
+            "recall": 0.5161915010231826,
+            "f1-score": 0.5311097346489222,
+            "support": 922.0
+        },
+        "weighted avg": {
+            "precision": 0.5745185495628972,
+            "recall": 0.5780911062906724,
+            "f1-score": 0.5709895666334769,
+            "support": 922.0
+        }
+    },
+    "model address": "Model\\model_31_10_2024_19_56\\pictures_forest.pkl"
+}
